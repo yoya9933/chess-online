@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "vinext dev",
+    "build": "vinext build && node scripts/copy-hosting.mjs",
+    "start": "vinext start"
   },
   "engines": {
     "node": ">=18"
@@ -13,6 +13,7 @@
   "dependencies": {
     "next": "^15.5.7",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "vinext": "^0.0.20"
   }
 }
