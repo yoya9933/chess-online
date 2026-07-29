@@ -1,26 +1,87 @@
-const hostedWithoutRealtime = typeof window.io !== "function";
-const socket = hostedWithoutRealtime ? {
+const hostedWithoutRealtime = false;
+const socketHandlers = {};
+let playerToken = localStorage.getItem("xiangqi-player-token");
+if (!playerToken) {
+  playerToken = crypto.randomUUID();
+  localStorage.setItem("xiangqi-player-token", playerToken);
+}
+let pollTimer = null, stateRevision = 0, lastPlayers = "";
+
+async function roomRequest(method, payload) {
+  const response = await fetch("/api/rooms", {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: method === "POST" ? JSON.stringify(payload) : undefined,
+    cache: "no-store"
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "連線失敗");
+  return data;
+}
+
+function applyRemote(data) {
+  const playersKey = JSON.stringify(data.players || []);
+  if (playersKey !== lastPlayers) {
+    lastPlayers = playersKey;
+    socketHandlers.players?.(data.players || []);
+  }
+  if (data.revision !== stateRevision) {
+    stateRevision = data.revision;
+    socketHandlers.moved?.({ state: data.state });
+  }
+}
+
+async function pollRoom() {
+  if (!roomId) return;
+  try {
+    const response = await fetch(`/api/rooms?room=${encodeURIComponent(roomId)}&token=${encodeURIComponent(playerToken)}`, { cache: "no-store" });
+    const data = await response.json();
+    if (response.ok) {
+      $("#connection").classList.add("online");
+      $("#connection").innerHTML = "<i></i> 已連線";
+      applyRemote(data);
+    }
+  } catch {}
+}
+
+const socket = {
   on(event, callback) {
+    socketHandlers[event] = callback;
     if (event === "connect") setTimeout(callback, 0);
   },
-  emit(event, payload, callback) {
-    if (event === "join-room") {
-      callback({
-        roomId: payload.roomId,
-        color: "local",
-        players: [
-          { id: "local-red", name: payload.name || "紅方", color: "red" },
-          { id: "local-black", name: "同機棋友", color: "black" }
-        ]
-      });
-    }
-    if (event === "restart") {
-      state = initialState();
-      selected = null;
-      render();
+  async emit(event, payload, callback) {
+    try {
+      if (event === "join-room") {
+        const data = await roomRequest("POST", {
+          action: "join", roomId: payload.roomId, name: payload.name, token: playerToken
+        });
+        stateRevision = data.revision;
+        lastPlayers = JSON.stringify(data.players || []);
+        callback(data);
+        clearInterval(pollTimer);
+        pollTimer = setInterval(pollRoom, 1200);
+      } else if (event === "move") {
+        const data = await roomRequest("POST", {
+          action: "move", roomId, token: playerToken, revision: stateRevision, state: payload.state
+        });
+        stateRevision = data.revision;
+      } else if (event === "restart") {
+        const data = await roomRequest("POST", {
+          action: "restart", roomId, token: playerToken
+        });
+        stateRevision = data.revision;
+        state = data.state;
+        selected = null;
+        render();
+      }
+    } catch (error) {
+      toast(error.message);
+      if (event === "move") stateRevision = -1;
+      await pollRoom();
+      if (callback) callback({ error: error.message });
     }
   }
-} : io();
+};
 const $ = (s) => document.querySelector(s);
 const boardEl = $("#board");
 let myColor = "spectator", roomId = "", selected = null, players = [];
@@ -109,7 +170,7 @@ function clickCell(y,x,isTarget){
 function showGame(result){
   myColor=result.color;roomId=result.roomId;players=result.players||[];if(result.state)state=result.state;
   $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");
-  $("#room-label").textContent=hostedWithoutRealtime ? "本機雙人對弈" : `房間代碼 · ${roomId}`;
+  $("#room-label").textContent=`房間代碼 · ${roomId}`;
   history.replaceState(null,"",`?room=${roomId}`);renderPlayers();render();
 }
 function renderPlayers(){
@@ -119,7 +180,7 @@ function renderPlayers(){
 function escapeHtml(v){const d=document.createElement("div");d.textContent=v;return d.innerHTML}
 function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show");setTimeout(()=>$("#toast").classList.remove("show"),1800)}
 
-socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML=hostedWithoutRealtime?"<i></i> 本機模式":"<i></i> 已連線"});
+socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 已連線"});
 socket.on("disconnect",()=>{$("#connection").classList.remove("online");$("#connection").innerHTML="<i></i> 重新連線中"});
 socket.on("players",p=>{players=p;renderPlayers()});
 socket.on("moved",data=>{state=data.state;selected=null;render()});

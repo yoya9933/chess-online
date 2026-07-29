@@ -13,9 +13,8 @@ npm run dev
 
 ## 部署
 
-目前網站前端使用 Next.js，可部署至 OpenAI Sites。原本的 Socket.IO
-即時房間伺服器保留在 `server.js`，但 Sites 不執行常駐 WebSocket 服務；
-Sites 版本會自動切換為本機雙人模式。
+網站前端使用 Next.js，可部署至 OpenAI Sites。Sites 版本透過內建 D1
+資料庫同步房間、玩家與棋局狀態，支援跨手機與電腦聯機。瀏覽器會定時
+同步最新棋步，斷線後使用原房間連結即可重新加入。
 
-若要跨裝置即時聯機，可再接上 Supabase Realtime、Firebase 或獨立的
-Socket.IO 服務。
+原本的 Socket.IO 伺服器仍保留在 `server.js`，僅供傳統 Node.js 主機使用。
