@@ -103,8 +103,11 @@ function initialState(){
 function inside(y,x){return y>=0&&y<10&&x>=0&&x<9}
 function pathCount(f,t,b){
   let n=0;
-  if(f.y===t.y) for(let x=Math.min(f.x,t.x)+1;x<Math.max(f.x,t.x);x++) if(b[f.y][x])n++;
-  else for(let y=Math.min(f.y,t.y)+1;y<Math.max(f.y,t.y);y++) if(b[y][f.x])n++;
+  if(f.y===t.y) {
+    for(let x=Math.min(f.x,t.x)+1;x<Math.max(f.x,t.x);x++) if(b[f.y][x])n++;
+  } else {
+    for(let y=Math.min(f.y,t.y)+1;y<Math.max(f.y,t.y);y++) if(b[y][f.x])n++;
+  }
   return n;
 }
 function pseudoLegal(f,t,b){
