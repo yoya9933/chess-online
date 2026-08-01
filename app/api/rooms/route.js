@@ -111,10 +111,12 @@ export async function POST(request) {
     let room = await getRoom(db, roomId);
 
     if (action === "join") {
+      const preferredColor = body.preferredColor === "black" ? "black" : "red";
       if (!room) {
+        const column = preferredColor === "red" ? "red" : "black";
         await db.prepare(
           `INSERT INTO rooms
-           (room_id, state, revision, red_token, red_name, red_seen, updated_at)
+           (room_id, state, revision, ${column}_token, ${column}_name, ${column}_seen, updated_at)
            VALUES (?, ?, 0, ?, ?, ?, ?)`
         ).bind(roomId, JSON.stringify(initialState()), token, cleanName(body.name), now, now).run();
         room = await getRoom(db, roomId);
@@ -129,12 +131,14 @@ export async function POST(request) {
       } else if (token === room.black_token) {
         await db.prepare("UPDATE rooms SET black_name = ?, black_seen = ? WHERE room_id = ?")
           .bind(cleanName(body.name), now, roomId).run();
-      } else if (!room.red_token || redStale) {
+      } else if (preferredColor === "red" && (!room.red_token || redStale)) {
         await db.prepare("UPDATE rooms SET red_token = ?, red_name = ?, red_seen = ? WHERE room_id = ?")
           .bind(token, cleanName(body.name), now, roomId).run();
-      } else if (!room.black_token || blackStale) {
+      } else if (preferredColor === "black" && (!room.black_token || blackStale)) {
         await db.prepare("UPDATE rooms SET black_token = ?, black_name = ?, black_seen = ? WHERE room_id = ?")
           .bind(token, cleanName(body.name), now, roomId).run();
+      } else {
+        return json({ error: preferredColor === "red" ? "紅方席位已有人，請選擇黑方" : "黑方席位已有人，請選擇紅方" }, 409);
       }
       room = await getRoom(db, roomId);
       return json(publicRoom(room, token));

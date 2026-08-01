@@ -39,6 +39,11 @@
         <h2>入局</h2>
         <label>你的稱呼<input id="name" maxlength="16" placeholder="例如：棋痴老王" required></label>
         <label>房間代碼<input id="room" maxlength="6" placeholder="留空即可建立新房"></label>
+        <fieldset class="color-choice">
+          <legend>選擇陣營</legend>
+          <label><input type="radio" name="preferred-color" value="red" checked><span class="color-disc red">帥</span>紅方</label>
+          <label><input type="radio" name="preferred-color" value="black"><span class="color-disc black">將</span>黑方</label>
+        </fieldset>
         <button type="submit">開始對弈 <span>→</span></button>
         <small>建立房間後，分享連結邀請棋友加入</small>
       </form>

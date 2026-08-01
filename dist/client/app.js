@@ -53,7 +53,7 @@ const socket = {
     try {
       if (event === "join-room") {
         const data = await roomRequest("POST", {
-          action: "join", roomId: payload.roomId, name: payload.name, token: playerToken
+          action: "join", roomId: payload.roomId, name: payload.name, preferredColor: payload.preferredColor, token: playerToken
         });
         stateRevision = data.revision;
         lastPlayers = JSON.stringify(data.players || []);
@@ -294,7 +294,8 @@ socket.on("moved",data=>{const priorRequest=undoRequestedBy,base=sandboxActive?(
 socket.on("restarted",()=>{lastMove=null;state=initialState();selected=null;render()});
 $("#join-form").onsubmit=e=>{
   e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
-  socket.emit("join-room",{roomId:id,name:$("#name").value},result=>result.error?toast(result.error):showGame(result));
+  const preferredColor=document.querySelector('input[name="preferred-color"]:checked')?.value||"red";
+  socket.emit("join-room",{roomId:id,name:$("#name").value,preferredColor},result=>result.error?toast(result.error):showGame(result));
 };
 $("#copy-link").onclick=async()=>{await navigator.clipboard.writeText(location.href);toast("邀請連結已複製")};
 $("#restart").onclick=()=>socket.emit("restart");
