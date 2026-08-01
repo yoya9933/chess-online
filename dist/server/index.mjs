@@ -6388,8 +6388,8 @@ async function POST(request) {
       }
     } else if (action === "request-undo") {
       const currentState = JSON.parse(room.state);
-      if (!room.previous_state) return json({ error: "目前沒有可以悔棋的棋步" }, 409);
-      if (currentState.turn === color) return json({ error: "只能請求撤回自己剛走的一步" }, 409);
+      const history = Array.isArray(currentState.history) ? currentState.history : [];
+      if (history.length <= 1 && !room.previous_state) return json({ error: "已經回到開局，沒有可以撤回的棋步" }, 409);
       if (room.undo_requested_by) return json({ error: "已有悔棋請求等待回覆" }, 409);
       await db.prepare(
         "UPDATE rooms SET undo_requested_by = ?, revision = revision + 1, updated_at = ? WHERE room_id = ?"
@@ -6398,9 +6398,18 @@ async function POST(request) {
       if (!room.undo_requested_by) return json({ error: "悔棋請求已失效" }, 409);
       if (room.undo_requested_by === color) return json({ error: "請等待對方回覆" }, 403);
       if (body.accept) {
+        const currentState = JSON.parse(room.state);
+        const history = Array.isArray(currentState.history) ? currentState.history : [];
+        let restoredState = null;
+        if (history.length > 1) {
+          const previousPosition = history[history.length - 2]?.position;
+          if (previousPosition?.board) restoredState = { ...previousPosition, history: history.slice(0, -1) };
+        }
+        if (!restoredState && room.previous_state) restoredState = JSON.parse(room.previous_state);
+        if (!restoredState) return json({ error: "已經回到開局，沒有可以撤回的棋步" }, 409);
         await db.prepare(
-          "UPDATE rooms SET state = previous_state, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
-        ).bind(now, roomId).run();
+          "UPDATE rooms SET state = ?, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
+        ).bind(JSON.stringify(restoredState), now, roomId).run();
       } else {
         await db.prepare(
           "UPDATE rooms SET undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"

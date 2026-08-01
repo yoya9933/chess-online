@@ -358,7 +358,7 @@ function renderUndo(){
   const panel=$("#undo-panel"),response=$("#undo-response"),request=$("#undo-request");
   const isPlayer=!localMode&&(myColor==="red"||myColor==="black");
   request.classList.toggle("hidden",!isPlayer);
-  request.disabled=sandboxActive||replayActive||!isPlayer||Boolean(undoRequestedBy)||state.turn===myColor||players.length<2;
+  request.disabled=sandboxActive||replayActive||!isPlayer||Boolean(undoRequestedBy)||(state.history?.length||0)<=1||players.length<2;
   if(!undoRequestedBy){panel.classList.add("hidden");return}
   panel.classList.remove("hidden");
   const mine=undoRequestedBy===myColor;
