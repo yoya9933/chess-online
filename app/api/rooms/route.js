@@ -29,7 +29,20 @@ function initialState(variant = "standard") {
     for (let i = types.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [types[i], types[j]] = [types[j], types[i]]; }
     spots.forEach((spot, index) => { board[spot.y][spot.x] = { t: types[index], c: color, h: true, o: spot.o }; });
   }
-  return { board, turn: "red", winner: null, history: [], variant };
+  return { board, turn: "red", winner: null, history: [], variant, captures: { red: [], black: [] } };
+}
+
+function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function positionSnapshot(state) { return { board: clone(state.board), turn: state.turn, winner: state.winner || null, lastAction: state.lastAction ? clone(state.lastAction) : null, variant: state.variant || "standard", captures: clone(state.captures || { red: [], black: [] }) }; }
+function privateState(state, viewer) {
+  const output = clone(state);
+  const maskBoard = (board) => board?.forEach((row) => row.forEach((piece) => { if (piece?.h) piece.t = "?"; }));
+  maskBoard(output.board);
+  output.history?.forEach((entry) => maskBoard(entry.position?.board));
+  const captures = output.captures || { red: [], black: [] };
+  output.captures = { red: viewer === "red" ? captures.red || [] : [], black: viewer === "black" ? captures.black || [] : [] };
+  output.history?.forEach((entry) => { if (entry.position?.captures) entry.position.captures = { red: viewer === "red" ? entry.position.captures.red || [] : [], black: viewer === "black" ? entry.position.captures.black || [] : [] }; });
+  return output;
 }
 
 function cleanRoomId(value) {
@@ -67,10 +80,11 @@ function publicRoom(room, token) {
   const players = [];
   if (room.red_token) players.push({ name: room.red_name, color: "red" });
   if (room.black_token) players.push({ name: room.black_name, color: "black" });
+  const color = playerColor(room, token);
   return {
     roomId: room.room_id,
-    color: playerColor(room, token),
-    state: JSON.parse(room.state),
+    color,
+    state: privateState(JSON.parse(room.state), color),
     revision: room.revision,
     players,
     undoRequestedBy: room.undo_requested_by || null,
@@ -168,6 +182,21 @@ export async function POST(request) {
       if (currentState.turn !== color || nextState.turn === color) {
         return json({ error: "尚未輪到你行棋" }, 409);
       }
+      const from = nextState.lastAction?.from, to = nextState.lastAction?.to;
+      if (![from?.x, from?.y, to?.x, to?.y].every(Number.isInteger)) return json({ error: "棋步位置無效" }, 400);
+      const moving = currentState.board?.[from.y]?.[from.x], captured = currentState.board?.[to.y]?.[to.x];
+      if (!moving || moving.c !== color) return json({ error: "棋步棋子無效" }, 400);
+      const authoritativeBoard = clone(currentState.board);
+      authoritativeBoard[to.y][to.x] = { ...moving, h: false };
+      authoritativeBoard[from.y][from.x] = null;
+      nextState.board = authoritativeBoard;
+      nextState.variant = currentState.variant || "standard";
+      nextState.captures = clone(currentState.captures || { red: [], black: [] });
+      if (captured) nextState.captures[color].push({ t: captured.t, c: captured.c });
+      const oldHistory = Array.isArray(currentState.history) ? clone(currentState.history) : [];
+      if (!oldHistory.length) oldHistory.push({ label: "開局", position: positionSnapshot(currentState) });
+      const label = nextState.history?.[nextState.history.length - 1]?.label || "揭子";
+      nextState.history = [...oldHistory, { label, position: positionSnapshot(nextState) }];
       const result = await db.prepare(
         "UPDATE rooms SET previous_state = state, state = ?, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ? AND revision = ?"
       ).bind(JSON.stringify(nextState), now, roomId, expectedRevision).run();

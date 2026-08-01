@@ -66,8 +66,9 @@ const socket = {
           action: "move", roomId, token: playerToken, revision: stateRevision, state: payload.state
         });
         stateRevision = data.revision;
+        state = data.state;
         undoRequestedBy = null;
-        renderUndo();
+        render();renderUndo();
       } else if (event === "request-undo") {
         const data = await roomRequest("POST", { action: "request-undo", roomId, token: playerToken });
         stateRevision = data.revision;
@@ -164,7 +165,7 @@ function initialState(variant="standard"){
   [1,7].forEach(x=>b[2][x]={t:"C",c:"black"});[1,7].forEach(x=>b[7][x]={t:"C",c:"red"});
   [0,2,4,6,8].forEach(x=>{b[3][x]={t:"P",c:"black"};b[6][x]={t:"P",c:"red"}});
   if(variant==="jieqi")for(const color of ["red","black"]){const spots=[],types=[];for(let y=0;y<10;y++)for(let x=0;x<9;x++){const p=b[y][x];if(p?.c===color&&p.t!=="K"){spots.push({y,x,o:p.t});types.push(p.t)}}for(let i=types.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[types[i],types[j]]=[types[j],types[i]]}spots.forEach((s,i)=>b[s.y][s.x]={t:types[i],c:color,h:true,o:s.o})}
-  return {board:b,turn:"red",winner:null,history:[],variant};
+  return {board:b,turn:"red",winner:null,history:[],variant,captures:{red:[],black:[]}};
 }
 function inside(y,x){return y>=0&&y<10&&x>=0&&x<9}
 function pathCount(f,t,b){
@@ -282,6 +283,12 @@ function render(){
   const colorName=state.turn==="red"?"紅方":"黑方";
   $("#status").textContent=setupActive?"自訂棋局 · 選擇棋子後點擊棋盤放置":replayActive?`棋譜回放 · 第 ${replayIndex}/${Math.max(0,(liveState?.history?.length||1)-1)} 手`:sandboxActive?`沙盤推演 · ${colorName}試走`:state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(aiThinking?"電腦思考中…":!localMode&&players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
   renderReplay();
+  renderCaptured();
+}
+function renderCaptured(){
+  const panel=$("#captured-panel"),list=$("#captured-list"),items=state.captures?.[myColor]||[],visible=state.variant==="jieqi"&&(myColor==="red"||myColor==="black");
+  panel.classList.toggle("hidden",!visible);if(!visible)return;
+  list.innerHTML=items.length?items.map(item=>`<span class="captured-chip ${item.c}">${names[item.c]?.[item.t]||"?"}</span>`).join(""):"<em>尚未揭獲棋子</em>";
 }
 function clickCell(y,x,isTarget){
   if(setupActive){
@@ -300,6 +307,7 @@ function clickCell(y,x,isTarget){
     lastMove={from,to:{y,x},capture:Boolean(captured),reveal:wasHidden};
     state.board[y][x]=state.board[from.y][from.x];state.board[from.y][from.x]=null;
     if(state.board[y][x]?.h)state.board[y][x].h=false;
+    if(captured){state.captures=state.captures||{red:[],black:[]};state.captures[activeColor].push({t:captured.t,c:captured.c})}
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";
     if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
@@ -346,6 +354,7 @@ function makeAiMove(){
   if(!choice){state.winner=myColor;aiThinking=false;render();return}
   const {from,to}=choice,moving=state.board[from.y][from.x],captured=state.board[to.y][to.x],beforePosition=positionSnapshot(state),aiColor=state.turn,wasHidden=Boolean(moving.h),notationMoving={...moving,t:moving.h?moving.o:moving.t};
   state.board[to.y][to.x]=moving;state.board[from.y][from.x]=null;if(state.board[to.y][to.x]?.h)state.board[to.y][to.x].h=false;lastMove={from,to,capture:Boolean(captured),reveal:wasHidden};
+  if(captured){state.captures=state.captures||{red:[],black:[]};state.captures[aiColor].push({t:captured.t,c:captured.c})}
   if(captured?.t==="K")state.winner=aiColor;state.turn=aiColor==="red"?"black":"red";
   if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=aiColor;
   state.lastAction={from,to,capture:Boolean(captured),reveal:wasHidden};recordMove(from,to,notationMoving,captured,beforePosition);aiThinking=false;playMoveSound(Boolean(captured));const givesCheck=!state.winner&&inCheck(state.turn,state.board);render();showMoveEffects(Boolean(captured),state.winner,to,givesCheck);
