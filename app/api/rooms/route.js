@@ -34,14 +34,21 @@ function initialState(variant = "standard") {
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function positionSnapshot(state) { return { board: clone(state.board), turn: state.turn, winner: state.winner || null, lastAction: state.lastAction ? clone(state.lastAction) : null, variant: state.variant || "standard", captures: clone(state.captures || { red: [], black: [] }) }; }
+function visibleCaptures(captures, viewer) {
+  const output = { red: [], black: [] };
+  for (const side of ["red", "black"]) output[side] = (captures?.[side] || []).map((item) => {
+    const hidden = item.hidden !== false;
+    return !hidden || viewer === side ? { ...item, hidden } : { t: "?", c: item.c, hidden: true };
+  });
+  return output;
+}
 function privateState(state, viewer) {
   const output = clone(state);
   const maskBoard = (board) => board?.forEach((row) => row.forEach((piece) => { if (piece?.h) piece.t = "?"; }));
   maskBoard(output.board);
   output.history?.forEach((entry) => maskBoard(entry.position?.board));
-  const captures = output.captures || { red: [], black: [] };
-  output.captures = { red: viewer === "red" ? captures.red || [] : [], black: viewer === "black" ? captures.black || [] : [] };
-  output.history?.forEach((entry) => { if (entry.position?.captures) entry.position.captures = { red: viewer === "red" ? entry.position.captures.red || [] : [], black: viewer === "black" ? entry.position.captures.black || [] : [] }; });
+  output.captures = visibleCaptures(output.captures, viewer);
+  output.history?.forEach((entry) => { if (entry.position?.captures) entry.position.captures = visibleCaptures(entry.position.captures, viewer); });
   return output;
 }
 
@@ -192,7 +199,7 @@ export async function POST(request) {
       nextState.board = authoritativeBoard;
       nextState.variant = currentState.variant || "standard";
       nextState.captures = clone(currentState.captures || { red: [], black: [] });
-      if (captured) nextState.captures[color].push({ t: captured.t, c: captured.c });
+      if (captured) nextState.captures[color].push({ t: captured.t, c: captured.c, hidden: Boolean(captured.h) });
       const oldHistory = Array.isArray(currentState.history) ? clone(currentState.history) : [];
       if (!oldHistory.length) oldHistory.push({ label: "開局", position: positionSnapshot(currentState) });
       const label = nextState.history?.[nextState.history.length - 1]?.label || "揭子";

@@ -286,9 +286,11 @@ function render(){
   renderCaptured();
 }
 function renderCaptured(){
-  const panel=$("#captured-panel"),list=$("#captured-list"),items=state.captures?.[myColor]||[],visible=state.variant==="jieqi"&&(myColor==="red"||myColor==="black");
+  const panel=$("#captured-panel"),list=$("#captured-list"),visible=state.variant==="jieqi"&&(myColor==="red"||myColor==="black");
   panel.classList.toggle("hidden",!visible);if(!visible)return;
-  list.innerHTML=items.length?items.map(item=>`<span class="captured-chip ${item.c}">${names[item.c]?.[item.t]||"?"}</span>`).join(""):"<em>尚未揭獲棋子</em>";
+  const group=(side,label)=>{const items=state.captures?.[side]||[],chips=items.map(item=>{const concealed=side!==myColor&&item.hidden!==false,kind=concealed?"暗":names[item.c]?.[item.t]||"暗";return `<span class="captured-chip ${item.c}${concealed?" covered-capture":""}" title="${concealed?"暗子真身僅對方可見":`${kind}（明子）`}">${kind}</span>`}).join("");return `<div class="captured-group"><b>${label}</b><div class="captured-row">${chips||"<em>尚無吃子</em>"}</div></div>`};
+  const opponent=myColor==="red"?"black":"red";
+  list.innerHTML=group(myColor,"我方吃子")+group(opponent,"對方吃子");
 }
 function clickCell(y,x,isTarget){
   if(setupActive){
@@ -307,7 +309,7 @@ function clickCell(y,x,isTarget){
     lastMove={from,to:{y,x},capture:Boolean(captured),reveal:wasHidden};
     state.board[y][x]=state.board[from.y][from.x];state.board[from.y][from.x]=null;
     if(state.board[y][x]?.h)state.board[y][x].h=false;
-    if(captured){state.captures=state.captures||{red:[],black:[]};state.captures[activeColor].push({t:captured.t,c:captured.c})}
+    if(captured){state.captures=state.captures||{red:[],black:[]};state.captures[activeColor].push({t:captured.t,c:captured.c,hidden:Boolean(captured.h)})}
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";
     if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
@@ -354,7 +356,7 @@ function makeAiMove(){
   if(!choice){state.winner=myColor;aiThinking=false;render();return}
   const {from,to}=choice,moving=state.board[from.y][from.x],captured=state.board[to.y][to.x],beforePosition=positionSnapshot(state),aiColor=state.turn,wasHidden=Boolean(moving.h),notationMoving={...moving,t:moving.h?moving.o:moving.t};
   state.board[to.y][to.x]=moving;state.board[from.y][from.x]=null;if(state.board[to.y][to.x]?.h)state.board[to.y][to.x].h=false;lastMove={from,to,capture:Boolean(captured),reveal:wasHidden};
-  if(captured){state.captures=state.captures||{red:[],black:[]};state.captures[aiColor].push({t:captured.t,c:captured.c})}
+  if(captured){state.captures=state.captures||{red:[],black:[]};state.captures[aiColor].push({t:captured.t,c:captured.c,hidden:Boolean(captured.h)})}
   if(captured?.t==="K")state.winner=aiColor;state.turn=aiColor==="red"?"black":"red";
   if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=aiColor;
   state.lastAction={from,to,capture:Boolean(captured),reveal:wasHidden};recordMove(from,to,notationMoving,captured,beforePosition);aiThinking=false;playMoveSound(Boolean(captured));const givesCheck=!state.winner&&inCheck(state.turn,state.board);render();showMoveEffects(Boolean(captured),state.winner,to,givesCheck);
