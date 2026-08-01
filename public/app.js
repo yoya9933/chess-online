@@ -242,13 +242,16 @@ function render(){
   const grid=document.createElement("div");grid.className="grid-lines";
   grid.innerHTML='<div class="river">楚 河　　　　漢 界</div><i class="palace top"></i><i class="palace bottom"></i>';
   boardEl.appendChild(grid);
+  if(displayedMove?.from&&displayedMove?.to){
+    const markerLayer=document.createElement("div");markerLayer.className="last-move-layer";
+    [[displayedMove.from,"from"],[displayedMove.to,"to"]].forEach(([point,type])=>{const marker=document.createElement("i");marker.className=`last-move-marker ${type}`;marker.style.setProperty("--marker-x",blackView?8-point.x:point.x);marker.style.setProperty("--marker-y",blackView?9-point.y:point.y);markerLayer.appendChild(marker)});
+    boardEl.appendChild(markerLayer);
+  }
   const targets=selected?movesFrom(selected):[];
   state.board.forEach((row,y)=>row.forEach((p,x)=>{
     const cell=document.createElement("div");cell.className="cell";cell.dataset.x=x;cell.dataset.y=y;
     cell.style.setProperty("--x",blackView?8-x:x);cell.style.setProperty("--y",blackView?9-y:y);
     const isTarget=targets.some(t=>t.x===x&&t.y===y);
-    if(displayedMove?.from.x===x&&displayedMove?.from.y===y)cell.classList.add("last-from");
-    if(displayedMove?.to.x===x&&displayedMove?.to.y===y)cell.classList.add("last-to");
     if(isTarget)cell.classList.add(p?"capture":"target");
     if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"")+(p.t==="K"&&p.c===checkedColor?" checked":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}${p.t==="K"&&p.c===checkedColor?"，被將軍":""}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125*viewDirection}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125*viewDirection}%`)}cell.appendChild(el)}
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
