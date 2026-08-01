@@ -37,8 +37,13 @@
       <form id="join-form" class="join-card">
         <p class="seal">弈</p>
         <h2>入局</h2>
+        <fieldset class="mode-choice">
+          <legend>對弈模式</legend>
+          <label><input type="radio" name="game-mode" value="online" checked>線上對局</label>
+          <label><input type="radio" name="game-mode" value="solo">單機對電腦</label>
+        </fieldset>
         <label>你的稱呼<input id="name" maxlength="16" placeholder="例如：棋痴老王" required></label>
-        <label>房間代碼<input id="room" maxlength="6" placeholder="留空即可建立新房"></label>
+        <label id="room-field">房間代碼<input id="room" maxlength="6" placeholder="留空即可建立新房"></label>
         <fieldset class="color-choice">
           <legend>選擇陣營</legend>
           <label><input type="radio" name="preferred-color" value="red" checked><span class="color-disc red">帥</span>紅方</label>

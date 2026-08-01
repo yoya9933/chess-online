@@ -103,6 +103,7 @@ let lastMove = null;
 let undoRequestedBy = null;
 let sandboxActive = false, liveState = null, sandboxHistory = [], sandboxIndex = 0;
 let replayActive = false, replayIndex = 0;
+let localMode = false, aiThinking = false;
 let soundEnabled = localStorage.getItem("xiangqi-sound") !== "off";
 let audioContext = null;
 
@@ -175,6 +176,11 @@ function pseudoLegal(f,t,b){
 function cloneBoard(b){return b.map(r=>r.map(p=>p?{...p}:null))}
 function cloneState(value){return JSON.parse(JSON.stringify(value))}
 function positionSnapshot(value){return {board:cloneBoard(value.board),turn:value.turn,winner:value.winner||null}}
+function recordMove(from,to,moving,captured,beforePosition){
+  if(!Array.isArray(state.history)||!state.history.length)state.history=[{label:"開局",position:beforePosition}];
+  const side=moving.c==="red"?"紅":"黑",piece=names[moving.c][moving.t],verb=captured?"吃":"走至";
+  state.history.push({label:`${side}${piece} ${from.x+1},${from.y+1} ${verb} ${to.x+1},${to.y+1}`,position:positionSnapshot(state)});
+}
 function inCheck(color,b){
   let king;
   for(let y=0;y<10;y++)for(let x=0;x<9;x++)if(b[y][x]?.t==="K"&&b[y][x].c===color)king={y,x};
@@ -228,13 +234,13 @@ function render(){
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
-  $("#status").textContent=replayActive?`棋譜回放 · 第 ${replayIndex}/${Math.max(0,(liveState?.history?.length||1)-1)} 手`:sandboxActive?`沙盤推演 · ${colorName}試走`:state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
+  $("#status").textContent=replayActive?`棋譜回放 · 第 ${replayIndex}/${Math.max(0,(liveState?.history?.length||1)-1)} 手`:sandboxActive?`沙盤推演 · ${colorName}試走`:state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(aiThinking?"電腦思考中…":!localMode&&players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
   renderReplay();
 }
 function clickCell(y,x,isTarget){
   if(replayActive)return;
   const activeColor = sandboxActive ? state.turn : myColor === "local" ? state.turn : myColor;
-  if(state.winner||activeColor!==state.turn||(!sandboxActive&&players.filter(p=>p.color!=="spectator").length<2))return;
+  if(aiThinking||state.winner||activeColor!==state.turn||(!sandboxActive&&!localMode&&players.filter(p=>p.color!=="spectator").length<2))return;
   const p=state.board[y][x];
   if(selected&&isTarget){
     const from={...selected}, captured=state.board[y][x];
@@ -244,23 +250,46 @@ function clickCell(y,x,isTarget){
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";
     if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
-    if(!sandboxActive){
-      if(!Array.isArray(state.history)||!state.history.length)state.history=[{label:"開局",position:beforePosition}];
-      const side=moving.c==="red"?"紅":"黑",piece=names[moving.c][moving.t],verb=captured?"吃":"走至";
-      state.history.push({label:`${side}${piece} ${from.x+1},${from.y+1} ${verb} ${x+1},${y+1}`,position:positionSnapshot(state)});
-    }
+    if(!sandboxActive)recordMove(from,{y,x},moving,captured,beforePosition);
     selected=null;playMoveSound(Boolean(captured));
     if(sandboxActive){sandboxHistory=sandboxHistory.slice(0,sandboxIndex+1);sandboxHistory.push(cloneState(state));sandboxIndex++;renderSandbox();render();return}
     render();
+    if(localMode){scheduleAiMove();return}
     socket.emit("move",{from,to:{y,x},state});return;
   }
   selected=p?.c===activeColor?{y,x}:null;render();
 }
 function showGame(result){
+  localMode=false;
   myColor=result.color;roomId=result.roomId;players=result.players||[];undoRequestedBy=result.undoRequestedBy||null;lastMove=null;if(result.state)state=result.state;
   $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");
   $("#room-label").textContent=`房間代碼 · ${roomId}`;
   history.replaceState(null,"",`?room=${roomId}`);renderPlayers();render();renderUndo();
+}
+function startLocal(color,name){
+  localMode=true;myColor=color;roomId="單機";state=initialState();players=[{name,color},{name:"電腦棋手",color:color==="red"?"black":"red"}];undoRequestedBy=null;lastMove=null;
+  $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");$("#room-label").textContent="單機人機對局";$("#copy-link").classList.add("hidden");$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 單機模式";history.replaceState(null,"",location.pathname);renderPlayers();renderUndo();renderSandbox();
+  scheduleAiMove();
+}
+function scheduleAiMove(){
+  if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor)return;
+  aiThinking=true;render();setTimeout(makeAiMove,500);
+}
+function makeAiMove(){
+  if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor){aiThinking=false;render();return}
+  const values={K:10000,R:90,C:50,H:45,E:25,A:25,P:15},choices=[];
+  for(let y=0;y<10;y++)for(let x=0;x<9;x++)if(state.board[y][x]?.c===state.turn){
+    for(let ty=0;ty<10;ty++)for(let tx=0;tx<9;tx++)if(legal({y,x},{y:ty,x:tx})){
+      const target=state.board[ty][tx];choices.push({from:{y,x},to:{y:ty,x:tx},score:(target?values[target.t]:0)+Math.random()*8});
+    }
+  }
+  choices.sort((a,b)=>b.score-a.score);const choice=choices[0];
+  if(!choice){state.winner=myColor;aiThinking=false;render();return}
+  const {from,to}=choice,moving=state.board[from.y][from.x],captured=state.board[to.y][to.x],beforePosition=positionSnapshot(state),aiColor=state.turn;
+  state.board[to.y][to.x]=moving;state.board[from.y][from.x]=null;lastMove={from,to,capture:Boolean(captured)};
+  if(captured?.t==="K")state.winner=aiColor;state.turn=aiColor==="red"?"black":"red";
+  if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=aiColor;
+  recordMove(from,to,moving,captured,beforePosition);aiThinking=false;playMoveSound(Boolean(captured));render();
 }
 function renderPlayers(){
   $("#players").innerHTML=players.map(p=>`<div class="player"><span>${escapeHtml(p.name)}</span><b class="${p.color}">${p.color==="red"?"紅方":p.color==="black"?"黑方":"觀戰"}</b></div>`).join("");
@@ -268,7 +297,7 @@ function renderPlayers(){
 }
 function renderUndo(){
   const panel=$("#undo-panel"),response=$("#undo-response"),request=$("#undo-request");
-  const isPlayer=myColor==="red"||myColor==="black";
+  const isPlayer=!localMode&&(myColor==="red"||myColor==="black");
   request.classList.toggle("hidden",!isPlayer);
   request.disabled=sandboxActive||replayActive||!isPlayer||Boolean(undoRequestedBy)||state.turn===myColor||players.length<2;
   if(!undoRequestedBy){panel.classList.add("hidden");return}
@@ -293,7 +322,7 @@ function stepSandbox(delta){
   sandboxIndex=next;state=cloneState(sandboxHistory[sandboxIndex]);selected=null;lastMove=null;renderSandbox();render();
 }
 function exitSandbox(){
-  sandboxActive=false;state=cloneState(liveState||state);liveState=null;sandboxHistory=[];sandboxIndex=0;selected=null;lastMove=null;renderSandbox();render();renderUndo();
+  sandboxActive=false;state=cloneState(liveState||state);liveState=null;sandboxHistory=[];sandboxIndex=0;selected=null;lastMove=null;renderSandbox();render();renderUndo();scheduleAiMove();
 }
 function officialState(){return (sandboxActive||replayActive)?liveState:state}
 function renderReplay(){
@@ -313,7 +342,7 @@ function stepReplay(delta){
   const history=liveState?.history||[],next=replayIndex+delta;if(next<0||next>=history.length)return;
   replayIndex=next;state={...cloneState(history[next].position),history:cloneState(history)};selected=null;lastMove=null;render();
 }
-function exitReplay(){replayActive=false;state=cloneState(liveState||state);liveState=null;replayIndex=0;selected=null;lastMove=null;render();renderUndo();renderSandbox()}
+function exitReplay(){replayActive=false;state=cloneState(liveState||state);liveState=null;replayIndex=0;selected=null;lastMove=null;render();renderUndo();renderSandbox();scheduleAiMove()}
 function recordText(){
   const official=officialState(),moves=(official?.history||[]).slice(1).map((item,index)=>`${index+1}. ${item.label}`).join("\n");
   return `楚河棋局｜房間 ${roomId}\n${moves}\n結果：${official?.winner==="red"?"紅方勝":official?.winner==="black"?"黑方勝":"未完局"}`;
@@ -329,10 +358,12 @@ socket.on("restarted",()=>{sandboxActive=false;replayActive=false;liveState=null
 $("#join-form").onsubmit=e=>{
   e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
   const preferredColor=document.querySelector('input[name="preferred-color"]:checked')?.value||"red";
+  const mode=document.querySelector('input[name="game-mode"]:checked')?.value||"online";
+  if(mode==="solo"){startLocal(preferredColor,$("#name").value);return}
   socket.emit("join-room",{roomId:id,name:$("#name").value,preferredColor},result=>result.error?toast(result.error):showGame(result));
 };
 $("#copy-link").onclick=async()=>{await navigator.clipboard.writeText(location.href);toast("邀請連結已複製")};
-$("#restart").onclick=()=>socket.emit("restart");
+$("#restart").onclick=()=>{if(localMode){state=initialState();selected=null;lastMove=null;aiThinking=false;render();scheduleAiMove()}else socket.emit("restart")};
 $("#undo-request").onclick=()=>socket.emit("request-undo",{});
 $("#undo-accept").onclick=()=>socket.emit("respond-undo",{accept:true});
 $("#undo-reject").onclick=()=>socket.emit("respond-undo",{accept:false});
@@ -350,5 +381,6 @@ $("#record-share").onclick=async()=>{const text=recordText();if(navigator.share)
 $("#sound-toggle").onclick=()=>{soundEnabled=!soundEnabled;localStorage.setItem("xiangqi-sound",soundEnabled?"on":"off");updateSoundToggle();if(soundEnabled)playMoveSound(false)};
 updateSoundToggle();
 renderSandbox();
+document.querySelectorAll('input[name="game-mode"]').forEach(input=>input.onchange=()=>$("#room-field").classList.toggle("hidden",input.value==="solo"&&input.checked));
 const queryRoom=new URLSearchParams(location.search).get("room");if(queryRoom)$("#room").value=queryRoom;
 render();
