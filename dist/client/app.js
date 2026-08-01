@@ -70,6 +70,7 @@ const socket = {
           action: "restart", roomId, token: playerToken
         });
         stateRevision = data.revision;
+        lastMove = null;
         state = data.state;
         selected = null;
         render();
@@ -86,6 +87,7 @@ const $ = (s) => document.querySelector(s);
 const boardEl = $("#board");
 let myColor = "spectator", roomId = "", selected = null, players = [];
 let state = initialState();
+let lastMove = null;
 
 const names = {
   red: { K:"帥", A:"仕", E:"相", H:"傌", R:"俥", C:"炮", P:"兵" },
@@ -144,7 +146,20 @@ function legal(f,t){
 function movesFrom(f){
   const out=[];for(let y=0;y<10;y++)for(let x=0;x<9;x++)if(legal(f,{y,x}))out.push({y,x});return out;
 }
+function detectMove(previous,next){
+  if(!previous?.board||!next?.board)return null;
+  const from=[],to=[];
+  for(let y=0;y<10;y++)for(let x=0;x<9;x++){
+    const before=previous.board[y][x],after=next.board[y][x];
+    if(before&&!after)from.push({y,x,piece:before});
+    if(after&&(!before||before.c!==after.c||before.t!==after.t))to.push({y,x,piece:after});
+  }
+  if(from.length!==1||to.length!==1)return null;
+  if(from[0].piece.c!==to[0].piece.c||from[0].piece.t!==to[0].piece.t)return null;
+  return {from:{y:from[0].y,x:from[0].x},to:{y:to[0].y,x:to[0].x}};
+}
 function render(){
+  const animatedMove=lastMove;lastMove=null;
   boardEl.innerHTML="";
   const grid=document.createElement("div");grid.className="grid-lines";
   grid.innerHTML='<div class="river">楚 河　　　　漢 界</div><i class="palace top"></i><i class="palace bottom"></i>';
@@ -155,7 +170,7 @@ function render(){
     cell.style.setProperty("--x",x);cell.style.setProperty("--y",y);
     const isTarget=targets.some(t=>t.x===x&&t.y===y);
     if(isTarget)cell.classList.add(p?"capture":"target");
-    if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}`;cell.appendChild(el)}
+    if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125}%`)}cell.appendChild(el)}
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
@@ -167,6 +182,7 @@ function clickCell(y,x,isTarget){
   const p=state.board[y][x];
   if(selected&&isTarget){
     const from={...selected}, captured=state.board[y][x];
+    lastMove={from,to:{y,x}};
     state.board[y][x]=state.board[from.y][from.x];state.board[from.y][from.x]=null;
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";selected=null;render();
@@ -175,7 +191,7 @@ function clickCell(y,x,isTarget){
   selected=p?.c===activeColor?{y,x}:null;render();
 }
 function showGame(result){
-  myColor=result.color;roomId=result.roomId;players=result.players||[];if(result.state)state=result.state;
+  myColor=result.color;roomId=result.roomId;players=result.players||[];lastMove=null;if(result.state)state=result.state;
   $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");
   $("#room-label").textContent=`房間代碼 · ${roomId}`;
   history.replaceState(null,"",`?room=${roomId}`);renderPlayers();render();
@@ -190,8 +206,8 @@ function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show"
 socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 已連線"});
 socket.on("disconnect",()=>{$("#connection").classList.remove("online");$("#connection").innerHTML="<i></i> 重新連線中"});
 socket.on("players",p=>{players=p;renderPlayers()});
-socket.on("moved",data=>{state=data.state;selected=null;render()});
-socket.on("restarted",()=>{state=initialState();selected=null;render()});
+socket.on("moved",data=>{lastMove=detectMove(state,data.state);state=data.state;selected=null;render()});
+socket.on("restarted",()=>{lastMove=null;state=initialState();selected=null;render()});
 $("#join-form").onsubmit=e=>{
   e.preventDefault();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
   socket.emit("join-room",{roomId:id,name:$("#name").value},result=>result.error?toast(result.error):showGame(result));
