@@ -297,7 +297,7 @@ function clickCell(y,x,isTarget){
     const givesCheck=!state.winner&&inCheck(state.turn,state.board);
     if(sandboxActive){sandboxHistory=sandboxHistory.slice(0,sandboxIndex+1);sandboxHistory.push(cloneState(state));sandboxIndex++;renderSandbox();render();showMoveEffects(Boolean(captured),state.winner,{y,x},givesCheck);return}
     render();showMoveEffects(Boolean(captured),state.winner,{y,x},givesCheck);
-    if(localMode){scheduleAiMove();return}
+    if(localMode){scheduleAiMove(givesCheck?1050:captured?720:380);return}
     socket.emit("move",{from,to:{y,x},state});return;
   }
   selected=p?.c===activeColor?{y,x}:null;render();
@@ -314,9 +314,12 @@ function startLocal(color,name){
   $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");$("#room-label").textContent="單機人機對局";$("#copy-link").classList.add("hidden");$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 單機模式";history.replaceState(null,"",location.pathname);renderPlayers();renderUndo();renderSandbox();
   scheduleAiMove();
 }
-function scheduleAiMove(){
+function scheduleAiMove(effectDelay=0){
   if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor)return;
-  aiThinking=true;render();setTimeout(makeAiMove,500);
+  setTimeout(()=>{
+    if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor)return;
+    aiThinking=true;render();setTimeout(makeAiMove,500);
+  },effectDelay);
 }
 function makeAiMove(){
   if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor){aiThinking=false;render();return}
