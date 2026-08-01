@@ -162,6 +162,23 @@ export async function POST(request) {
         "UPDATE rooms SET previous_state = state, state = ?, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ? AND revision = ?"
       ).bind(JSON.stringify(nextState), now, roomId, expectedRevision).run();
       if (!result.meta?.changes) return json({ error: "棋局已更新，正在重新同步" }, 409);
+    } else if (action === "change-color") {
+      const target = body.color === "black" ? "black" : "red";
+      if (target !== color) {
+        const targetToken = target === "red" ? room.red_token : room.black_token;
+        const targetSeen = Number(target === "red" ? room.red_seen : room.black_seen) || 0;
+        if (targetToken && now - targetSeen <= STALE_AFTER_MS) {
+          return json({ error: target === "red" ? "紅方席位目前有人" : "黑方席位目前有人" }, 409);
+        }
+        const name = color === "red" ? room.red_name : room.black_name;
+        if (target === "red") {
+          await db.prepare("UPDATE rooms SET black_token = NULL, black_name = NULL, black_seen = NULL, red_token = ?, red_name = ?, red_seen = ?, revision = revision + 1, updated_at = ? WHERE room_id = ?")
+            .bind(token, name, now, now, roomId).run();
+        } else {
+          await db.prepare("UPDATE rooms SET red_token = NULL, red_name = NULL, red_seen = NULL, black_token = ?, black_name = ?, black_seen = ?, revision = revision + 1, updated_at = ? WHERE room_id = ?")
+            .bind(token, name, now, now, roomId).run();
+        }
+      }
     } else if (action === "request-undo") {
       const currentState = JSON.parse(room.state);
       if (!room.previous_state) return json({ error: "目前沒有可以悔棋的棋步" }, 409);

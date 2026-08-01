@@ -20,6 +20,7 @@ async function roomRequest(method, payload) {
 }
 
 function applyRemote(data) {
+  if(data.color&&data.color!==myColor){myColor=data.color;selected=null}
   const playersKey = JSON.stringify(data.players || []);
   if (playersKey !== lastPlayers) {
     lastPlayers = playersKey;
@@ -75,6 +76,9 @@ const socket = {
         const data = await roomRequest("POST", { action: "respond-undo", roomId, token: playerToken, accept: payload.accept });
         stateRevision = data.revision;
         socketHandlers.moved?.(data);
+      } else if (event === "change-color") {
+        const data = await roomRequest("POST", { action: "change-color", roomId, token: playerToken, color: payload.color });
+        applyRemote(data);renderPlayers();renderSideChoice();toast(`已切換為${data.color==="red"?"紅方":"黑方"}`);
       } else if (event === "restart") {
         const data = await roomRequest("POST", {
           action: "restart", roomId, token: playerToken
@@ -303,7 +307,20 @@ function makeAiMove(){
 }
 function renderPlayers(){
   $("#players").innerHTML=players.map(p=>`<div class="player"><span>${escapeHtml(p.name)}</span><b class="${p.color}">${p.color==="red"?"紅方":p.color==="black"?"黑方":"觀戰"}</b></div>`).join("");
-  render();
+  render();renderSideChoice();
+}
+function renderSideChoice(){
+  const red=$("#choose-red"),black=$("#choose-black");
+  red.classList.toggle("active",myColor==="red");black.classList.toggle("active",myColor==="black");
+  red.setAttribute("aria-pressed",String(myColor==="red"));black.setAttribute("aria-pressed",String(myColor==="black"));
+  const redOccupied=players.some(p=>p.color==="red"),blackOccupied=players.some(p=>p.color==="black");
+  red.disabled=myColor==="red"||(!localMode&&redOccupied);black.disabled=myColor==="black"||(!localMode&&blackOccupied);
+}
+function changeSide(color){
+  if(color===myColor)return;
+  if(!localMode){socket.emit("change-color",{color});return}
+  const playerName=players.find(p=>p.color===myColor&&p.name!=="電腦棋手")?.name||"玩家";
+  myColor=color;players=[{name:playerName,color},{name:"電腦棋手",color:color==="red"?"black":"red"}];selected=null;renderPlayers();renderSideChoice();scheduleAiMove();
 }
 function renderUndo(){
   const panel=$("#undo-panel"),response=$("#undo-response"),request=$("#undo-request");
@@ -377,6 +394,8 @@ $("#restart").onclick=()=>{if(localMode){state=initialState();selected=null;last
 $("#undo-request").onclick=()=>socket.emit("request-undo",{});
 $("#undo-accept").onclick=()=>socket.emit("respond-undo",{accept:true});
 $("#undo-reject").onclick=()=>socket.emit("respond-undo",{accept:false});
+$("#choose-red").onclick=()=>changeSide("red");
+$("#choose-black").onclick=()=>changeSide("black");
 $("#sandbox-enter").onclick=enterSandbox;
 $("#sandbox-prev").onclick=()=>stepSandbox(-1);
 $("#sandbox-next").onclick=()=>stepSandbox(1);
