@@ -233,7 +233,7 @@ function detectMove(previous,next){
 }
 function render(){
   const animatedMove=lastMove;lastMove=null;
-  const displayedMove=animatedMove||state.lastAction;
+  const displayedMove=state.lastAction||animatedMove;
   const checkedColor=!state.winner&&inCheck(state.turn,state.board)?state.turn:null;
   const blackView=myColor==="black",viewDirection=blackView?-1:1;
   boardEl.classList.toggle("black-view",blackView);
@@ -391,7 +391,7 @@ function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show"
 socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 已連線"});
 socket.on("disconnect",()=>{$("#connection").classList.remove("online");$("#connection").innerHTML="<i></i> 重新連線中"});
 socket.on("players",p=>{players=p;renderPlayers()});
-socket.on("moved",data=>{const priorRequest=undoRequestedBy,base=(sandboxActive||replayActive)?(liveState||state):state,changed=JSON.stringify(base)!==JSON.stringify(data.state);undoRequestedBy=data.undoRequestedBy||null;if(sandboxActive||replayActive){liveState=cloneState(data.state);renderUndo();renderReplay();return}const forward=(data.state.history?.length||0)>(state.history?.length||0),remoteMove=detectMove(state,data.state)||(forward?data.state.lastAction:null);lastMove=remoteMove;state=data.state;selected=null;if(remoteMove)playMoveSound(remoteMove.capture);if(priorRequest===myColor&&!undoRequestedBy)toast(changed?"對方同意悔棋":"對方拒絕悔棋");const givesCheck=Boolean(remoteMove&&!state.winner&&inCheck(state.turn,state.board));render();if(remoteMove)showMoveEffects(remoteMove.capture,state.winner,remoteMove.to,givesCheck);renderUndo()});
+socket.on("moved",data=>{const priorRequest=undoRequestedBy,base=(sandboxActive||replayActive)?(liveState||state):state,changed=JSON.stringify(base)!==JSON.stringify(data.state);undoRequestedBy=data.undoRequestedBy||null;if(sandboxActive||replayActive){liveState=cloneState(data.state);renderUndo();renderReplay();return}const forward=(data.state.history?.length||0)>(state.history?.length||0),remoteMove=forward?(detectMove(state,data.state)||data.state.lastAction):null;lastMove=remoteMove;state=data.state;selected=null;if(remoteMove)playMoveSound(remoteMove.capture);if(priorRequest===myColor&&!undoRequestedBy)toast(changed?"對方同意悔棋":"對方拒絕悔棋");const givesCheck=Boolean(remoteMove&&!state.winner&&inCheck(state.turn,state.board));render();if(remoteMove)showMoveEffects(remoteMove.capture,state.winner,remoteMove.to,givesCheck);renderUndo()});
 socket.on("restarted",()=>{sandboxActive=false;replayActive=false;liveState=null;lastMove=null;state=initialState();selected=null;render();renderSandbox()});
 $("#join-form").onsubmit=e=>{
   e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
