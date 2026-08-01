@@ -146,9 +146,13 @@ function movesFrom(f){
 }
 function render(){
   boardEl.innerHTML="";
+  const grid=document.createElement("div");grid.className="grid-lines";
+  grid.innerHTML='<div class="river">楚 河　　　　漢 界</div><i class="palace top"></i><i class="palace bottom"></i>';
+  boardEl.appendChild(grid);
   const targets=selected?movesFrom(selected):[];
   state.board.forEach((row,y)=>row.forEach((p,x)=>{
     const cell=document.createElement("div");cell.className="cell";cell.dataset.x=x;cell.dataset.y=y;
+    cell.style.setProperty("--x",x);cell.style.setProperty("--y",y);
     const isTarget=targets.some(t=>t.x===x&&t.y===y);
     if(isTarget)cell.classList.add(p?"capture":"target");
     if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}`;cell.appendChild(el)}
