@@ -27,7 +27,7 @@ function applyRemote(data) {
   }
   if (data.revision !== stateRevision) {
     stateRevision = data.revision;
-    socketHandlers.moved?.({ state: data.state });
+    socketHandlers.moved?.(data);
   }
 }
 
@@ -65,6 +65,16 @@ const socket = {
           action: "move", roomId, token: playerToken, revision: stateRevision, state: payload.state
         });
         stateRevision = data.revision;
+        undoRequestedBy = null;
+        renderUndo();
+      } else if (event === "request-undo") {
+        const data = await roomRequest("POST", { action: "request-undo", roomId, token: playerToken });
+        stateRevision = data.revision;
+        socketHandlers.moved?.(data);
+      } else if (event === "respond-undo") {
+        const data = await roomRequest("POST", { action: "respond-undo", roomId, token: playerToken, accept: payload.accept });
+        stateRevision = data.revision;
+        socketHandlers.moved?.(data);
       } else if (event === "restart") {
         const data = await roomRequest("POST", {
           action: "restart", roomId, token: playerToken
@@ -72,8 +82,10 @@ const socket = {
         stateRevision = data.revision;
         lastMove = null;
         state = data.state;
+        undoRequestedBy = null;
         selected = null;
         render();
+        renderUndo();
       }
     } catch (error) {
       toast(error.message);
@@ -88,6 +100,7 @@ const boardEl = $("#board");
 let myColor = "spectator", roomId = "", selected = null, players = [];
 let state = initialState();
 let lastMove = null;
+let undoRequestedBy = null;
 let soundEnabled = localStorage.getItem("xiangqi-sound") !== "off";
 let audioContext = null;
 
@@ -230,14 +243,25 @@ function clickCell(y,x,isTarget){
   selected=p?.c===activeColor?{y,x}:null;render();
 }
 function showGame(result){
-  myColor=result.color;roomId=result.roomId;players=result.players||[];lastMove=null;if(result.state)state=result.state;
+  myColor=result.color;roomId=result.roomId;players=result.players||[];undoRequestedBy=result.undoRequestedBy||null;lastMove=null;if(result.state)state=result.state;
   $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");
   $("#room-label").textContent=`房間代碼 · ${roomId}`;
-  history.replaceState(null,"",`?room=${roomId}`);renderPlayers();render();
+  history.replaceState(null,"",`?room=${roomId}`);renderPlayers();render();renderUndo();
 }
 function renderPlayers(){
   $("#players").innerHTML=players.map(p=>`<div class="player"><span>${escapeHtml(p.name)}</span><b class="${p.color}">${p.color==="red"?"紅方":p.color==="black"?"黑方":"觀戰"}</b></div>`).join("");
   render();
+}
+function renderUndo(){
+  const panel=$("#undo-panel"),response=$("#undo-response"),request=$("#undo-request");
+  const isPlayer=myColor==="red"||myColor==="black";
+  request.classList.toggle("hidden",!isPlayer);
+  request.disabled=!isPlayer||Boolean(undoRequestedBy)||state.turn===myColor||players.length<2;
+  if(!undoRequestedBy){panel.classList.add("hidden");return}
+  panel.classList.remove("hidden");
+  const mine=undoRequestedBy===myColor;
+  $("#undo-message").textContent=mine?"已送出悔棋請求，等待對方回覆…":"對方希望撤回剛才的棋步，是否同意？";
+  response.classList.toggle("hidden",mine||!isPlayer);
 }
 function escapeHtml(v){const d=document.createElement("div");d.textContent=v;return d.innerHTML}
 function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show");setTimeout(()=>$("#toast").classList.remove("show"),1800)}
@@ -245,7 +269,7 @@ function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show"
 socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 已連線"});
 socket.on("disconnect",()=>{$("#connection").classList.remove("online");$("#connection").innerHTML="<i></i> 重新連線中"});
 socket.on("players",p=>{players=p;renderPlayers()});
-socket.on("moved",data=>{lastMove=detectMove(state,data.state);state=data.state;selected=null;if(lastMove)playMoveSound(lastMove.capture);render()});
+socket.on("moved",data=>{const priorRequest=undoRequestedBy,changed=JSON.stringify(state)!==JSON.stringify(data.state);lastMove=detectMove(state,data.state);state=data.state;undoRequestedBy=data.undoRequestedBy||null;selected=null;if(lastMove)playMoveSound(lastMove.capture);if(priorRequest===myColor&&!undoRequestedBy)toast(changed?"對方同意悔棋":"對方拒絕悔棋");render();renderUndo()});
 socket.on("restarted",()=>{lastMove=null;state=initialState();selected=null;render()});
 $("#join-form").onsubmit=e=>{
   e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
@@ -253,6 +277,9 @@ $("#join-form").onsubmit=e=>{
 };
 $("#copy-link").onclick=async()=>{await navigator.clipboard.writeText(location.href);toast("邀請連結已複製")};
 $("#restart").onclick=()=>socket.emit("restart");
+$("#undo-request").onclick=()=>socket.emit("request-undo",{});
+$("#undo-accept").onclick=()=>socket.emit("respond-undo",{accept:true});
+$("#undo-reject").onclick=()=>socket.emit("respond-undo",{accept:false});
 $("#sound-toggle").onclick=()=>{soundEnabled=!soundEnabled;localStorage.setItem("xiangqi-sound",soundEnabled?"on":"off");updateSoundToggle();if(soundEnabled)playMoveSound(false)};
 updateSoundToggle();
 const queryRoom=new URLSearchParams(location.search).get("room");if(queryRoom)$("#room").value=queryRoom;

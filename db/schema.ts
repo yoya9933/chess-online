@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS rooms (
   black_token TEXT,
   black_name TEXT,
   black_seen INTEGER,
+  previous_state TEXT,
+  undo_requested_by TEXT,
   updated_at INTEGER NOT NULL
 )`;
 

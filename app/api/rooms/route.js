@@ -64,6 +64,7 @@ function publicRoom(room, token) {
     state: JSON.parse(room.state),
     revision: room.revision,
     players,
+    undoRequestedBy: room.undo_requested_by || null,
   };
 }
 
@@ -154,12 +155,32 @@ export async function POST(request) {
         return json({ error: "尚未輪到你行棋" }, 409);
       }
       const result = await db.prepare(
-        "UPDATE rooms SET state = ?, revision = revision + 1, updated_at = ? WHERE room_id = ? AND revision = ?"
+        "UPDATE rooms SET previous_state = state, state = ?, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ? AND revision = ?"
       ).bind(JSON.stringify(nextState), now, roomId, expectedRevision).run();
       if (!result.meta?.changes) return json({ error: "棋局已更新，正在重新同步" }, 409);
+    } else if (action === "request-undo") {
+      const currentState = JSON.parse(room.state);
+      if (!room.previous_state) return json({ error: "目前沒有可以悔棋的棋步" }, 409);
+      if (currentState.turn === color) return json({ error: "只能請求撤回自己剛走的一步" }, 409);
+      if (room.undo_requested_by) return json({ error: "已有悔棋請求等待回覆" }, 409);
+      await db.prepare(
+        "UPDATE rooms SET undo_requested_by = ?, revision = revision + 1, updated_at = ? WHERE room_id = ?"
+      ).bind(color, now, roomId).run();
+    } else if (action === "respond-undo") {
+      if (!room.undo_requested_by) return json({ error: "悔棋請求已失效" }, 409);
+      if (room.undo_requested_by === color) return json({ error: "請等待對方回覆" }, 403);
+      if (body.accept) {
+        await db.prepare(
+          "UPDATE rooms SET state = previous_state, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
+        ).bind(now, roomId).run();
+      } else {
+        await db.prepare(
+          "UPDATE rooms SET undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
+        ).bind(now, roomId).run();
+      }
     } else if (action === "restart") {
       await db.prepare(
-        "UPDATE rooms SET state = ?, revision = revision + 1, updated_at = ? WHERE room_id = ?"
+        "UPDATE rooms SET state = ?, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
       ).bind(JSON.stringify(initialState()), now, roomId).run();
     } else {
       return json({ error: "未知操作" }, 400);

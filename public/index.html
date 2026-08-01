@@ -54,7 +54,15 @@
           <button id="sound-toggle" class="secondary" type="button" aria-pressed="true">音效：開</button>
         </div>
         <div id="players" class="players"></div>
+        <div id="undo-panel" class="undo-panel hidden" role="status">
+          <p id="undo-message"></p>
+          <div id="undo-response" class="undo-response hidden">
+            <button id="undo-accept" class="secondary" type="button">同意</button>
+            <button id="undo-reject" class="secondary" type="button">拒絕</button>
+          </div>
+        </div>
         <div class="actions">
+          <button id="undo-request" class="text-button">請求悔棋</button>
           <button id="restart" class="text-button">重新開局</button>
           <a href="/" class="text-button">離開棋局</a>
         </div>
