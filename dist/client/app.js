@@ -146,6 +146,13 @@ function legal(f,t){
 function movesFrom(f){
   const out=[];for(let y=0;y<10;y++)for(let x=0;x<9;x++)if(legal(f,{y,x}))out.push({y,x});return out;
 }
+function hasAnyLegalMove(color){
+  for(let y=0;y<10;y++)for(let x=0;x<9;x++){
+    if(state.board[y][x]?.c!==color)continue;
+    for(let ty=0;ty<10;ty++)for(let tx=0;tx<9;tx++)if(legal({y,x},{y:ty,x:tx}))return true;
+  }
+  return false;
+}
 function detectMove(previous,next){
   if(!previous?.board||!next?.board)return null;
   const from=[],to=[];
@@ -177,7 +184,7 @@ function render(){
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
-  $("#status").textContent=state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(players.length<2?"等待棋友加入…":`${colorName}行棋`);
+  $("#status").textContent=state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
 }
 function clickCell(y,x,isTarget){
   const activeColor = myColor === "local" ? state.turn : myColor;
@@ -188,7 +195,9 @@ function clickCell(y,x,isTarget){
     lastMove={from,to:{y,x}};
     state.board[y][x]=state.board[from.y][from.x];state.board[from.y][from.x]=null;
     if(captured?.t==="K")state.winner=activeColor;
-    state.turn=activeColor==="red"?"black":"red";selected=null;render();
+    state.turn=activeColor==="red"?"black":"red";
+    if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
+    selected=null;render();
     socket.emit("move",{from,to:{y,x},state});return;
   }
   selected=p?.c===activeColor?{y,x}:null;render();
