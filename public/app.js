@@ -88,6 +88,33 @@ const boardEl = $("#board");
 let myColor = "spectator", roomId = "", selected = null, players = [];
 let state = initialState();
 let lastMove = null;
+let soundEnabled = localStorage.getItem("xiangqi-sound") !== "off";
+let audioContext = null;
+
+function ensureAudio(){
+  if(!soundEnabled)return null;
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return null;
+  if(!audioContext)audioContext=new AudioContextClass();
+  if(audioContext.state==="suspended")audioContext.resume().catch(()=>{});
+  return audioContext;
+}
+function tone(ctx,frequency,start,duration,volume,type="triangle"){
+  const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+  oscillator.type=type;oscillator.frequency.setValueAtTime(frequency,start);
+  gain.gain.setValueAtTime(volume,start);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
+  oscillator.connect(gain).connect(ctx.destination);oscillator.start(start);oscillator.stop(start+duration);
+}
+function playMoveSound(capture=false){
+  const ctx=ensureAudio();if(!ctx)return;const now=ctx.currentTime;
+  if(capture){tone(ctx,210,now,.13,.13);tone(ctx,125,now+.065,.18,.11,"sine")}
+  else{tone(ctx,360,now,.09,.1);tone(ctx,260,now+.025,.08,.055,"sine")}
+}
+function updateSoundToggle(){
+  const button=$("#sound-toggle");if(!button)return;
+  button.textContent=`音效：${soundEnabled?"開":"關"}`;
+  button.setAttribute("aria-pressed",String(soundEnabled));
+}
 
 const names = {
   red: { K:"帥", A:"仕", E:"相", H:"傌", R:"俥", C:"炮", P:"兵" },
@@ -159,11 +186,11 @@ function detectMove(previous,next){
   for(let y=0;y<10;y++)for(let x=0;x<9;x++){
     const before=previous.board[y][x],after=next.board[y][x];
     if(before&&!after)from.push({y,x,piece:before});
-    if(after&&(!before||before.c!==after.c||before.t!==after.t))to.push({y,x,piece:after});
+    if(after&&(!before||before.c!==after.c||before.t!==after.t))to.push({y,x,piece:after,capture:Boolean(before)});
   }
   if(from.length!==1||to.length!==1)return null;
   if(from[0].piece.c!==to[0].piece.c||from[0].piece.t!==to[0].piece.t)return null;
-  return {from:{y:from[0].y,x:from[0].x},to:{y:to[0].y,x:to[0].x}};
+  return {from:{y:from[0].y,x:from[0].x},to:{y:to[0].y,x:to[0].x},capture:to[0].capture};
 }
 function render(){
   const animatedMove=lastMove;lastMove=null;
@@ -192,12 +219,12 @@ function clickCell(y,x,isTarget){
   const p=state.board[y][x];
   if(selected&&isTarget){
     const from={...selected}, captured=state.board[y][x];
-    lastMove={from,to:{y,x}};
+    lastMove={from,to:{y,x},capture:Boolean(captured)};
     state.board[y][x]=state.board[from.y][from.x];state.board[from.y][from.x]=null;
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";
     if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
-    selected=null;render();
+    selected=null;playMoveSound(Boolean(captured));render();
     socket.emit("move",{from,to:{y,x},state});return;
   }
   selected=p?.c===activeColor?{y,x}:null;render();
@@ -218,13 +245,15 @@ function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show"
 socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 已連線"});
 socket.on("disconnect",()=>{$("#connection").classList.remove("online");$("#connection").innerHTML="<i></i> 重新連線中"});
 socket.on("players",p=>{players=p;renderPlayers()});
-socket.on("moved",data=>{lastMove=detectMove(state,data.state);state=data.state;selected=null;render()});
+socket.on("moved",data=>{lastMove=detectMove(state,data.state);state=data.state;selected=null;if(lastMove)playMoveSound(lastMove.capture);render()});
 socket.on("restarted",()=>{lastMove=null;state=initialState();selected=null;render()});
 $("#join-form").onsubmit=e=>{
-  e.preventDefault();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
+  e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
   socket.emit("join-room",{roomId:id,name:$("#name").value},result=>result.error?toast(result.error):showGame(result));
 };
 $("#copy-link").onclick=async()=>{await navigator.clipboard.writeText(location.href);toast("邀請連結已複製")};
 $("#restart").onclick=()=>socket.emit("restart");
+$("#sound-toggle").onclick=()=>{soundEnabled=!soundEnabled;localStorage.setItem("xiangqi-sound",soundEnabled?"on":"off");updateSoundToggle();if(soundEnabled)playMoveSound(false)};
+updateSoundToggle();
 const queryRoom=new URLSearchParams(location.search).get("room");if(queryRoom)$("#room").value=queryRoom;
 render();
