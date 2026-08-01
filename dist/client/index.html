@@ -66,13 +66,20 @@
           <p class="eyebrow">PRIVATE MATCH</p>
           <h2 id="game-title">好友對局</h2>
           <p id="room-label" class="room-label"></p>
-          <button id="copy-link" class="secondary">複製邀請連結</button>
-          <button id="sound-toggle" class="secondary" type="button" aria-pressed="true">音效：開</button>
-          <button id="setup-enter" class="secondary setup-side-button" type="button">自訂棋局</button>
-          <div class="in-game-color" aria-label="選擇對局陣營">
-            <span>我的陣營</span>
-            <button id="choose-red" class="side-button red" type="button">紅方</button>
-            <button id="choose-black" class="side-button black" type="button">黑方</button>
+          <section class="side-section" aria-label="對局工具">
+            <p class="side-section-title">對局工具</p>
+            <div class="side-tool-grid">
+              <button id="copy-link" class="secondary">複製邀請連結</button>
+              <button id="sound-toggle" class="secondary" type="button" aria-pressed="true">音效：開</button>
+              <button id="setup-enter" class="secondary" type="button">自訂棋局</button>
+            </div>
+          </section>
+          <div class="side-section in-game-color" aria-label="選擇對局陣營">
+            <p class="side-section-title">我的陣營</p>
+            <div class="side-choice-row">
+              <button id="choose-red" class="side-button red" type="button">紅方</button>
+              <button id="choose-black" class="side-button black" type="button">黑方</button>
+            </div>
           </div>
         </div>
         <div id="players" class="players"></div>
