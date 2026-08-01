@@ -192,10 +192,28 @@ function pseudoLegal(f,t,b){
 function cloneBoard(b){return b.map(r=>r.map(p=>p?{...p}:null))}
 function cloneState(value){return JSON.parse(JSON.stringify(value))}
 function positionSnapshot(value){return {board:cloneBoard(value.board),turn:value.turn,winner:value.winner||null,lastAction:value.lastAction?cloneState(value.lastAction):null}}
+const redNumbers=["","一","二","三","四","五","六","七","八","九"];
+const blackNumbers=["","１","２","３","４","５","６","７","８","９"];
+function notationNumber(color,value){return (color==="red"?redNumbers:blackNumbers)[value]}
+function notationFile(color,x){return notationNumber(color,color==="red"?9-x:x+1)}
+function piecePrefix(from,moving,board){
+  const same=[];
+  for(let y=0;y<10;y++)if(board[y][from.x]?.c===moving.c&&board[y][from.x]?.t===moving.t)same.push(y);
+  if(same.length<2)return `${names[moving.c][moving.t]}${notationFile(moving.c,from.x)}`;
+  same.sort((a,b)=>moving.c==="red"?a-b:b-a);
+  const rank=same.indexOf(from.y),label=rank===0?"前":rank===same.length-1?"後":same.length===3?"中":redNumbers[rank+1];
+  return `${label}${names[moving.c][moving.t]}`;
+}
+function chineseNotation(from,to,moving,board){
+  const prefix=piecePrefix(from,moving,board);
+  if(from.y===to.y)return `${prefix}平${notationFile(moving.c,to.x)}`;
+  const forward=moving.c==="red"?to.y<from.y:to.y>from.y,verb=forward?"進":"退";
+  const value=["H","E","A"].includes(moving.t)?notationFile(moving.c,to.x):notationNumber(moving.c,Math.abs(to.y-from.y));
+  return `${prefix}${verb}${value}`;
+}
 function recordMove(from,to,moving,captured,beforePosition){
   if(!Array.isArray(state.history)||!state.history.length)state.history=[{label:"開局",position:beforePosition}];
-  const side=moving.c==="red"?"紅":"黑",piece=names[moving.c][moving.t],verb=captured?"吃":"走至";
-  state.history.push({label:`${side}${piece} ${from.x+1},${from.y+1} ${verb} ${to.x+1},${to.y+1}`,position:positionSnapshot(state)});
+  state.history.push({label:chineseNotation(from,to,moving,beforePosition.board),position:positionSnapshot(state)});
 }
 function inCheck(color,b){
   let king;
