@@ -101,6 +101,7 @@ let myColor = "spectator", roomId = "", selected = null, players = [];
 let state = initialState();
 let lastMove = null;
 let undoRequestedBy = null;
+let sandboxActive = false, liveState = null, sandboxHistory = [], sandboxIndex = 0;
 let soundEnabled = localStorage.getItem("xiangqi-sound") !== "off";
 let audioContext = null;
 
@@ -171,6 +172,7 @@ function pseudoLegal(f,t,b){
   return false;
 }
 function cloneBoard(b){return b.map(r=>r.map(p=>p?{...p}:null))}
+function cloneState(value){return JSON.parse(JSON.stringify(value))}
 function inCheck(color,b){
   let king;
   for(let y=0;y<10;y++)for(let x=0;x<9;x++)if(b[y][x]?.t==="K"&&b[y][x].c===color)king={y,x};
@@ -224,11 +226,11 @@ function render(){
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
-  $("#status").textContent=state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
+  $("#status").textContent=sandboxActive?`沙盤推演 · ${colorName}試走`:state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
 }
 function clickCell(y,x,isTarget){
-  const activeColor = myColor === "local" ? state.turn : myColor;
-  if(state.winner||activeColor!==state.turn||players.filter(p=>p.color!=="spectator").length<2)return;
+  const activeColor = sandboxActive ? state.turn : myColor === "local" ? state.turn : myColor;
+  if(state.winner||activeColor!==state.turn||(!sandboxActive&&players.filter(p=>p.color!=="spectator").length<2))return;
   const p=state.board[y][x];
   if(selected&&isTarget){
     const from={...selected}, captured=state.board[y][x];
@@ -237,7 +239,9 @@ function clickCell(y,x,isTarget){
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";
     if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
-    selected=null;playMoveSound(Boolean(captured));render();
+    selected=null;playMoveSound(Boolean(captured));
+    if(sandboxActive){sandboxHistory=sandboxHistory.slice(0,sandboxIndex+1);sandboxHistory.push(cloneState(state));sandboxIndex++;renderSandbox();render();return}
+    render();
     socket.emit("move",{from,to:{y,x},state});return;
   }
   selected=p?.c===activeColor?{y,x}:null;render();
@@ -256,12 +260,29 @@ function renderUndo(){
   const panel=$("#undo-panel"),response=$("#undo-response"),request=$("#undo-request");
   const isPlayer=myColor==="red"||myColor==="black";
   request.classList.toggle("hidden",!isPlayer);
-  request.disabled=!isPlayer||Boolean(undoRequestedBy)||state.turn===myColor||players.length<2;
+  request.disabled=sandboxActive||!isPlayer||Boolean(undoRequestedBy)||state.turn===myColor||players.length<2;
   if(!undoRequestedBy){panel.classList.add("hidden");return}
   panel.classList.remove("hidden");
   const mine=undoRequestedBy===myColor;
   $("#undo-message").textContent=mine?"已送出悔棋請求，等待對方回覆…":"對方希望撤回剛才的棋步，是否同意？";
   response.classList.toggle("hidden",mine||!isPlayer);
+}
+function renderSandbox(){
+  $("#sandbox-enter").classList.toggle("hidden",sandboxActive);
+  $("#sandbox-controls").classList.toggle("hidden",!sandboxActive);
+  $("#sandbox-prev").disabled=!sandboxActive||sandboxIndex===0;
+  $("#sandbox-next").disabled=!sandboxActive||sandboxIndex>=sandboxHistory.length-1;
+  $("#restart").disabled=sandboxActive;
+}
+function enterSandbox(){
+  liveState=cloneState(state);state=cloneState(state);sandboxHistory=[cloneState(state)];sandboxIndex=0;sandboxActive=true;selected=null;renderSandbox();render();renderUndo();
+}
+function stepSandbox(delta){
+  const next=sandboxIndex+delta;if(next<0||next>=sandboxHistory.length)return;
+  sandboxIndex=next;state=cloneState(sandboxHistory[sandboxIndex]);selected=null;lastMove=null;renderSandbox();render();
+}
+function exitSandbox(){
+  sandboxActive=false;state=cloneState(liveState||state);liveState=null;sandboxHistory=[];sandboxIndex=0;selected=null;lastMove=null;renderSandbox();render();renderUndo();
 }
 function escapeHtml(v){const d=document.createElement("div");d.textContent=v;return d.innerHTML}
 function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show");setTimeout(()=>$("#toast").classList.remove("show"),1800)}
@@ -269,7 +290,7 @@ function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show"
 socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 已連線"});
 socket.on("disconnect",()=>{$("#connection").classList.remove("online");$("#connection").innerHTML="<i></i> 重新連線中"});
 socket.on("players",p=>{players=p;renderPlayers()});
-socket.on("moved",data=>{const priorRequest=undoRequestedBy,changed=JSON.stringify(state)!==JSON.stringify(data.state);lastMove=detectMove(state,data.state);state=data.state;undoRequestedBy=data.undoRequestedBy||null;selected=null;if(lastMove)playMoveSound(lastMove.capture);if(priorRequest===myColor&&!undoRequestedBy)toast(changed?"對方同意悔棋":"對方拒絕悔棋");render();renderUndo()});
+socket.on("moved",data=>{const priorRequest=undoRequestedBy,base=sandboxActive?(liveState||state):state,changed=JSON.stringify(base)!==JSON.stringify(data.state);undoRequestedBy=data.undoRequestedBy||null;if(sandboxActive){liveState=cloneState(data.state);renderUndo();return}lastMove=detectMove(state,data.state);state=data.state;selected=null;if(lastMove)playMoveSound(lastMove.capture);if(priorRequest===myColor&&!undoRequestedBy)toast(changed?"對方同意悔棋":"對方拒絕悔棋");render();renderUndo()});
 socket.on("restarted",()=>{lastMove=null;state=initialState();selected=null;render()});
 $("#join-form").onsubmit=e=>{
   e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
@@ -280,7 +301,12 @@ $("#restart").onclick=()=>socket.emit("restart");
 $("#undo-request").onclick=()=>socket.emit("request-undo",{});
 $("#undo-accept").onclick=()=>socket.emit("respond-undo",{accept:true});
 $("#undo-reject").onclick=()=>socket.emit("respond-undo",{accept:false});
+$("#sandbox-enter").onclick=enterSandbox;
+$("#sandbox-prev").onclick=()=>stepSandbox(-1);
+$("#sandbox-next").onclick=()=>stepSandbox(1);
+$("#sandbox-exit").onclick=exitSandbox;
 $("#sound-toggle").onclick=()=>{soundEnabled=!soundEnabled;localStorage.setItem("xiangqi-sound",soundEnabled?"on":"off");updateSoundToggle();if(soundEnabled)playMoveSound(false)};
 updateSoundToggle();
+renderSandbox();
 const queryRoom=new URLSearchParams(location.search).get("room");if(queryRoom)$("#room").value=queryRoom;
 render();

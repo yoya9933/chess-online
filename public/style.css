@@ -14,6 +14,7 @@ main{max-width:1400px;margin:auto;min-height:100vh;padding:0 5vw}header{height:9
 .secondary+.secondary{margin-left:6px}
 .undo-panel{margin:18px 0;padding:14px;border:1px solid #ffffff24;background:#ffffff0b;color:#d8cdbb;font-size:13px;line-height:1.6}.undo-panel p{margin:0}.undo-response{margin-top:10px}.undo-response .secondary{padding:8px 14px}
 .text-button:disabled{opacity:.35;cursor:not-allowed}
+.sandbox-toolbar{min-height:42px;margin:-5px 0 14px;display:flex;justify-content:center}.sandbox-toolbar .secondary{padding:8px 14px}.sandbox-toolbar .secondary:disabled{opacity:.35;cursor:not-allowed}
 .toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);opacity:0;background:#f3e8d4;color:#211d17;padding:12px 20px;transition:.2s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:800px){main{padding:0 18px}header{height:72px}.lobby{grid-template-columns:1fr;padding:6vh 0;gap:5vh}.intro h1{font-size:42px}.intro>p:last-child{font-size:14px}.join-card{padding:38px 28px 30px}.game{grid-template-columns:1fr;padding-top:24px}.game-info{display:block}.players{margin:20px 0}.actions{display:none}.board{width:min(94vw,630px)}.status{margin-top:4px}.piece{font-size:clamp(15px,5vw,28px)}}
 @media(max-width:800px){.actions{display:flex;margin:14px 0 22px}}
