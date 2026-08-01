@@ -6248,7 +6248,7 @@ function initialState() {
     board[3][x] = { t: "P", c: "black" };
     board[6][x] = { t: "P", c: "red" };
   });
-  return { board, turn: "red", winner: null };
+  return { board, turn: "red", winner: null, history: [] };
 }
 function cleanRoomId(value) {
   return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);

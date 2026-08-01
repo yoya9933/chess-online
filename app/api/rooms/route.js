@@ -20,7 +20,7 @@ function initialState() {
     board[3][x] = { t: "P", c: "black" };
     board[6][x] = { t: "P", c: "red" };
   });
-  return { board, turn: "red", winner: null };
+  return { board, turn: "red", winner: null, history: [] };
 }
 
 function cleanRoomId(value) {
