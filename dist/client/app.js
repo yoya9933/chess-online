@@ -54,7 +54,7 @@ const socket = {
     try {
       if (event === "join-room") {
         const data = await roomRequest("POST", {
-          action: "join", roomId: payload.roomId, name: payload.name, preferredColor: payload.preferredColor, token: playerToken
+          action: "join", roomId: payload.roomId, name: payload.name, preferredColor: payload.preferredColor, gameVariant: payload.gameVariant, token: playerToken
         });
         stateRevision = data.revision;
         lastPlayers = JSON.stringify(data.players || []);
@@ -157,13 +157,14 @@ const names = {
   black:{ K:"將", A:"士", E:"象", H:"馬", R:"車", C:"砲", P:"卒" }
 };
 
-function initialState(){
+function initialState(variant="standard"){
   const b = Array.from({length:10},()=>Array(9).fill(null));
   const row = ["R","H","E","A","K","A","E","H","R"];
   row.forEach((t,x)=>{b[0][x]={t,c:"black"};b[9][x]={t,c:"red"}});
   [1,7].forEach(x=>b[2][x]={t:"C",c:"black"});[1,7].forEach(x=>b[7][x]={t:"C",c:"red"});
   [0,2,4,6,8].forEach(x=>{b[3][x]={t:"P",c:"black"};b[6][x]={t:"P",c:"red"}});
-  return {board:b,turn:"red",winner:null,history:[]};
+  if(variant==="jieqi")for(const color of ["red","black"]){const spots=[],types=[];for(let y=0;y<10;y++)for(let x=0;x<9;x++){const p=b[y][x];if(p?.c===color&&p.t!=="K"){spots.push({y,x,o:p.t});types.push(p.t)}}for(let i=types.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[types[i],types[j]]=[types[j],types[i]]}spots.forEach((s,i)=>b[s.y][s.x]={t:types[i],c:color,h:true,o:s.o})}
+  return {board:b,turn:"red",winner:null,history:[],variant};
 }
 function inside(y,x){return y>=0&&y<10&&x>=0&&x<9}
 function pathCount(f,t,b){
@@ -177,17 +178,17 @@ function pathCount(f,t,b){
 }
 function pseudoLegal(f,t,b){
   const p=b[f.y][f.x], dest=b[t.y][t.x]; if(!p||!inside(t.y,t.x)||(dest&&dest.c===p.c))return false;
-  const dx=t.x-f.x,dy=t.y-f.y,ax=Math.abs(dx),ay=Math.abs(dy), red=p.c==="red";
-  if(p.t==="R") return (dx===0||dy===0)&&pathCount(f,t,b)===0;
-  if(p.t==="C") return (dx===0||dy===0)&&pathCount(f,t,b)===(dest?1:0);
-  if(p.t==="H") return ((ax===2&&ay===1&&!b[f.y][f.x+dx/2])||(ax===1&&ay===2&&!b[f.y+dy/2][f.x]));
-  if(p.t==="E") return ax===2&&ay===2&&!b[f.y+dy/2][f.x+dx/2]&&(red?t.y>=5:t.y<=4);
-  if(p.t==="A") return ax===1&&ay===1&&t.x>=3&&t.x<=5&&(red?t.y>=7:t.y<=2);
-  if(p.t==="K"){
+  const dx=t.x-f.x,dy=t.y-f.y,ax=Math.abs(dx),ay=Math.abs(dy), red=p.c==="red",type=p.h?p.o:p.t,freeJieqi=state.variant==="jieqi"&&!p.h;
+  if(type==="R") return (dx===0||dy===0)&&pathCount(f,t,b)===0;
+  if(type==="C") return (dx===0||dy===0)&&pathCount(f,t,b)===(dest?1:0);
+  if(type==="H") return ((ax===2&&ay===1&&!b[f.y][f.x+dx/2])||(ax===1&&ay===2&&!b[f.y+dy/2][f.x]));
+  if(type==="E") return ax===2&&ay===2&&!b[f.y+dy/2][f.x+dx/2]&&(freeJieqi||(red?t.y>=5:t.y<=4));
+  if(type==="A") return ax===1&&ay===1&&(freeJieqi||(t.x>=3&&t.x<=5&&(red?t.y>=7:t.y<=2)));
+  if(type==="K"){
     if(dest?.t==="K"&&dx===0&&pathCount(f,t,b)===0)return true;
     return ax+ay===1&&t.x>=3&&t.x<=5&&(red?t.y>=7:t.y<=2);
   }
-  if(p.t==="P"){
+  if(type==="P"){
     const forward=red?-1:1;
     return (dy===forward&&dx===0)||((red?f.y<=4:f.y>=5)&&dy===0&&ax===1);
   }
@@ -195,14 +196,14 @@ function pseudoLegal(f,t,b){
 }
 function cloneBoard(b){return b.map(r=>r.map(p=>p?{...p}:null))}
 function cloneState(value){return JSON.parse(JSON.stringify(value))}
-function positionSnapshot(value){return {board:cloneBoard(value.board),turn:value.turn,winner:value.winner||null,lastAction:value.lastAction?cloneState(value.lastAction):null}}
+function positionSnapshot(value){return {board:cloneBoard(value.board),turn:value.turn,winner:value.winner||null,lastAction:value.lastAction?cloneState(value.lastAction):null,variant:value.variant||"standard"}}
 const redNumbers=["","一","二","三","四","五","六","七","八","九"];
 const blackNumbers=["","１","２","３","４","５","６","７","８","９"];
 function notationNumber(color,value){return (color==="red"?redNumbers:blackNumbers)[value]}
 function notationFile(color,x){return notationNumber(color,color==="red"?9-x:x+1)}
 function piecePrefix(from,moving,board){
   const same=[];
-  for(let y=0;y<10;y++)if(board[y][from.x]?.c===moving.c&&board[y][from.x]?.t===moving.t)same.push(y);
+  for(let y=0;y<10;y++){const piece=board[y][from.x],type=piece?.h?piece.o:piece?.t;if(piece?.c===moving.c&&type===moving.t)same.push(y)}
   if(same.length<2)return `${names[moving.c][moving.t]}${notationFile(moving.c,from.x)}`;
   same.sort((a,b)=>moving.c==="red"?a-b:b-a);
   const rank=same.indexOf(from.y),label=rank===0?"前":rank===same.length-1?"後":same.length===3?"中":redNumbers[rank+1];
@@ -228,7 +229,7 @@ function inCheck(color,b){
 }
 function legal(f,t){
   if(!pseudoLegal(f,t,state.board))return false;
-  const b=cloneBoard(state.board);b[t.y][t.x]=b[f.y][f.x];b[f.y][f.x]=null;
+  const b=cloneBoard(state.board);b[t.y][t.x]=b[f.y][f.x];b[f.y][f.x]=null;if(b[t.y][t.x]?.h)b[t.y][t.x].h=false;
   return !inCheck(state.turn,b);
 }
 function movesFrom(f){
@@ -275,7 +276,7 @@ function render(){
     cell.style.setProperty("--x",blackView?8-x:x);cell.style.setProperty("--y",blackView?9-y:y);
     const isTarget=targets.some(t=>t.x===x&&t.y===y);
     if(isTarget)cell.classList.add(p?"capture":"target");
-    if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"")+(p.t==="K"&&p.c===checkedColor?" checked":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}${p.t==="K"&&p.c===checkedColor?"，被將軍":""}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125*viewDirection}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125*viewDirection}%`)}cell.appendChild(el)}
+    if(p){const el=document.createElement("button"),covered=Boolean(p.h);el.className=`piece ${p.c}`+(covered?" covered":"")+(selected?.x===x&&selected?.y===y?" selected":"")+(p.t==="K"&&p.c===checkedColor?" checked":"");el.textContent=covered?"暗":names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${covered?"暗子":el.textContent}${p.t==="K"&&p.c===checkedColor?"，被將軍":""}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");if(animatedMove.reveal)el.classList.add("revealed");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125*viewDirection}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125*viewDirection}%`)}cell.appendChild(el)}
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
@@ -295,14 +296,15 @@ function clickCell(y,x,isTarget){
   const p=state.board[y][x];
   if(selected&&isTarget){
     const from={...selected}, captured=state.board[y][x];
-    const moving=state.board[from.y][from.x],beforePosition=positionSnapshot(state);
-    lastMove={from,to:{y,x},capture:Boolean(captured)};
+    const moving=state.board[from.y][from.x],beforePosition=positionSnapshot(state),wasHidden=Boolean(moving.h),notationMoving={...moving,t:wasHidden?moving.o:moving.t};
+    lastMove={from,to:{y,x},capture:Boolean(captured),reveal:wasHidden};
     state.board[y][x]=state.board[from.y][from.x];state.board[from.y][from.x]=null;
+    if(state.board[y][x]?.h)state.board[y][x].h=false;
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";
     if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
-    state.lastAction={from,to:{y,x},capture:Boolean(captured)};
-    if(!sandboxActive)recordMove(from,{y,x},moving,captured,beforePosition);
+    state.lastAction={from,to:{y,x},capture:Boolean(captured),reveal:wasHidden};
+    if(!sandboxActive)recordMove(from,{y,x},notationMoving,captured,beforePosition);
     selected=null;playMoveSound(Boolean(captured));
     const givesCheck=!state.winner&&inCheck(state.turn,state.board);
     if(sandboxActive){sandboxHistory=sandboxHistory.slice(0,sandboxIndex+1);sandboxHistory.push(cloneState(state));sandboxIndex++;renderSandbox();render();showMoveEffects(Boolean(captured),state.winner,{y,x},givesCheck);return}
@@ -317,11 +319,12 @@ function showGame(result){
   myColor=result.color;roomId=result.roomId;players=result.players||[];undoRequestedBy=result.undoRequestedBy||null;lastMove=null;if(result.state)state=result.state;
   $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");
   $("#room-label").textContent=`房間代碼 · ${roomId}`;
+  $("#game-title").textContent=state.variant==="jieqi"?"揭棋對局":"好友對局";
   history.replaceState(null,"",`?room=${roomId}`);renderPlayers();render();renderUndo();
 }
-function startLocal(color,name){
-  localMode=true;myColor=color;roomId="單機";state=initialState();players=[{name,color},{name:"電腦棋手",color:color==="red"?"black":"red"}];undoRequestedBy=null;lastMove=null;
-  $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");$("#room-label").textContent="單機人機對局";$("#copy-link").classList.add("hidden");$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 單機模式";history.replaceState(null,"",location.pathname);renderPlayers();renderUndo();renderSandbox();
+function startLocal(color,name,variant="standard"){
+  localMode=true;myColor=color;roomId="單機";state=initialState(variant);players=[{name,color},{name:"電腦棋手",color:color==="red"?"black":"red"}];undoRequestedBy=null;lastMove=null;
+  $("#lobby").classList.add("hidden");$("#game").classList.remove("hidden");$("#room-label").textContent="單機人機對局";$("#game-title").textContent=variant==="jieqi"?"揭棋對局":"人機對局";$("#copy-link").classList.add("hidden");$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 單機模式";history.replaceState(null,"",location.pathname);renderPlayers();renderUndo();renderSandbox();
   scheduleAiMove();
 }
 function scheduleAiMove(effectDelay=0){
@@ -341,11 +344,11 @@ function makeAiMove(){
   }
   choices.sort((a,b)=>b.score-a.score);const choice=choices[0];
   if(!choice){state.winner=myColor;aiThinking=false;render();return}
-  const {from,to}=choice,moving=state.board[from.y][from.x],captured=state.board[to.y][to.x],beforePosition=positionSnapshot(state),aiColor=state.turn;
-  state.board[to.y][to.x]=moving;state.board[from.y][from.x]=null;lastMove={from,to,capture:Boolean(captured)};
+  const {from,to}=choice,moving=state.board[from.y][from.x],captured=state.board[to.y][to.x],beforePosition=positionSnapshot(state),aiColor=state.turn,wasHidden=Boolean(moving.h),notationMoving={...moving,t:moving.h?moving.o:moving.t};
+  state.board[to.y][to.x]=moving;state.board[from.y][from.x]=null;if(state.board[to.y][to.x]?.h)state.board[to.y][to.x].h=false;lastMove={from,to,capture:Boolean(captured),reveal:wasHidden};
   if(captured?.t==="K")state.winner=aiColor;state.turn=aiColor==="red"?"black":"red";
   if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=aiColor;
-  state.lastAction={from,to,capture:Boolean(captured)};recordMove(from,to,moving,captured,beforePosition);aiThinking=false;playMoveSound(Boolean(captured));const givesCheck=!state.winner&&inCheck(state.turn,state.board);render();showMoveEffects(Boolean(captured),state.winner,to,givesCheck);
+  state.lastAction={from,to,capture:Boolean(captured),reveal:wasHidden};recordMove(from,to,notationMoving,captured,beforePosition);aiThinking=false;playMoveSound(Boolean(captured));const givesCheck=!state.winner&&inCheck(state.turn,state.board);render();showMoveEffects(Boolean(captured),state.winner,to,givesCheck);
 }
 function renderPlayers(){
   $("#players").innerHTML=players.map(p=>`<div class="player"><span>${escapeHtml(p.name)}</span><b class="${p.color}">${p.color==="red"?"紅方":p.color==="black"?"黑方":"觀戰"}</b></div>`).join("");
@@ -377,7 +380,7 @@ function renderUndo(){
 }
 function renderSandbox(){
   $("#sandbox-enter").classList.toggle("hidden",sandboxActive||replayActive||setupActive);
-  $("#setup-enter").classList.toggle("hidden",sandboxActive||replayActive||setupActive);
+  $("#setup-enter").classList.toggle("hidden",sandboxActive||replayActive||setupActive||state.variant==="jieqi");
   $("#sandbox-controls").classList.toggle("hidden",!sandboxActive);
   $("#setup-controls").classList.toggle("hidden",!setupActive);
   $("#sandbox-prev").disabled=!sandboxActive||sandboxIndex===0;
@@ -440,11 +443,12 @@ $("#join-form").onsubmit=e=>{
   e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
   const preferredColor=document.querySelector('input[name="preferred-color"]:checked')?.value||"red";
   const mode=document.querySelector('input[name="game-mode"]:checked')?.value||"online";
-  if(mode==="solo"){startLocal(preferredColor,$("#name").value);return}
-  socket.emit("join-room",{roomId:id,name:$("#name").value,preferredColor},result=>result.error?toast(result.error):showGame(result));
+  const gameVariant=document.querySelector('input[name="game-variant"]:checked')?.value||"standard";
+  if(mode==="solo"){startLocal(preferredColor,$("#name").value,gameVariant);return}
+  socket.emit("join-room",{roomId:id,name:$("#name").value,preferredColor,gameVariant},result=>result.error?toast(result.error):showGame(result));
 };
 $("#copy-link").onclick=async()=>{await navigator.clipboard.writeText(location.href);toast("邀請連結已複製")};
-$("#restart").onclick=()=>{if(localMode){state=initialState();selected=null;lastMove=null;aiThinking=false;render();scheduleAiMove()}else socket.emit("restart")};
+$("#restart").onclick=()=>{if(localMode){state=initialState(state.variant||"standard");selected=null;lastMove=null;aiThinking=false;render();scheduleAiMove()}else socket.emit("restart")};
 $("#undo-request").onclick=()=>socket.emit("request-undo",{});
 $("#undo-accept").onclick=()=>socket.emit("respond-undo",{accept:true});
 $("#undo-reject").onclick=()=>socket.emit("respond-undo",{accept:false});

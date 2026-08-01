@@ -6233,7 +6233,7 @@ const roomsUpdatedIndex = "CREATE INDEX IF NOT EXISTS rooms_updated_at_idx ON ro
 const runtime = "edge";
 const dynamic = "force-dynamic";
 const STALE_AFTER_MS = 12e4;
-function initialState() {
+function initialState(variant = "standard") {
   const board = Array.from({ length: 10 }, () => Array(9).fill(null));
   const row = ["R", "H", "E", "A", "K", "A", "E", "H", "R"];
   row.forEach((t, x) => {
@@ -6248,7 +6248,24 @@ function initialState() {
     board[3][x] = { t: "P", c: "black" };
     board[6][x] = { t: "P", c: "red" };
   });
-  return { board, turn: "red", winner: null, history: [] };
+  if (variant === "jieqi") for (const color of ["red", "black"]) {
+    const spots = [], types = [];
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 9; x++) {
+      const piece = board[y][x];
+      if (piece?.c === color && piece.t !== "K") {
+        spots.push({ y, x, o: piece.t });
+        types.push(piece.t);
+      }
+    }
+    for (let i = types.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [types[i], types[j]] = [types[j], types[i]];
+    }
+    spots.forEach((spot, index) => {
+      board[spot.y][spot.x] = { t: types[index], c: color, h: true, o: spot.o };
+    });
+  }
+  return { board, turn: "red", winner: null, history: [], variant };
 }
 function cleanRoomId(value) {
   return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
@@ -6328,13 +6345,14 @@ async function POST(request) {
     let room = await getRoom(db, roomId);
     if (action === "join") {
       const preferredColor = body.preferredColor === "black" ? "black" : "red";
+      const gameVariant = body.gameVariant === "jieqi" ? "jieqi" : "standard";
       if (!room) {
         const column = preferredColor === "red" ? "red" : "black";
         await db.prepare(
           `INSERT INTO rooms
            (room_id, state, revision, ${column}_token, ${column}_name, ${column}_seen, updated_at)
            VALUES (?, ?, 0, ?, ?, ?, ?)`
-        ).bind(roomId, JSON.stringify(initialState()), token, cleanName(body.name), now, now).run();
+        ).bind(roomId, JSON.stringify(initialState(gameVariant)), token, cleanName(body.name), now, now).run();
         room = await getRoom(db, roomId);
         return json(publicRoom(room, token));
       }
@@ -6416,9 +6434,10 @@ async function POST(request) {
         ).bind(now, roomId).run();
       }
     } else if (action === "restart") {
+      const currentState = JSON.parse(room.state);
       await db.prepare(
         "UPDATE rooms SET state = ?, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
-      ).bind(JSON.stringify(initialState()), now, roomId).run();
+      ).bind(JSON.stringify(initialState(currentState.variant || "standard")), now, roomId).run();
     } else if (action === "custom-setup") {
       const customState = body.state;
       if (!customState?.board || customState.board.length !== 10 || !["red", "black"].includes(customState.turn)) {
