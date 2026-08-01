@@ -130,7 +130,7 @@ function playMoveSound(capture=false){
   if(capture){tone(ctx,210,now,.13,.13);tone(ctx,125,now+.065,.18,.11,"sine")}
   else{tone(ctx,360,now,.09,.1);tone(ctx,260,now+.025,.08,.055,"sine")}
 }
-function showMoveEffects(capture,winner,to){
+function showMoveEffects(capture,winner,to,check=false){
   if(capture&&to){
     const effect=document.createElement("div"),blackView=myColor==="black";
     effect.className="capture-fx";effect.style.setProperty("--fx-x",blackView?8-to.x:to.x);effect.style.setProperty("--fx-y",blackView?9-to.y:to.y);
@@ -138,6 +138,8 @@ function showMoveEffects(capture,winner,to){
   }
   if(winner){
     setTimeout(()=>{if(!state.winner)return;const effect=document.createElement("div");effect.className="mate-fx";effect.innerHTML="<span>將殺</span>";boardEl.appendChild(effect);setTimeout(()=>effect.remove(),1450)},capture?220:0);
+  }else if(check){
+    setTimeout(()=>{if(state.winner||!inCheck(state.turn,state.board))return;const effect=document.createElement("div");effect.className="check-fx";effect.innerHTML="<span>將軍</span>";boardEl.appendChild(effect);setTimeout(()=>effect.remove(),950)},capture?180:0);
   }
 }
 function updateSoundToggle(){
@@ -264,10 +266,12 @@ function clickCell(y,x,isTarget){
     if(captured?.t==="K")state.winner=activeColor;
     state.turn=activeColor==="red"?"black":"red";
     if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=activeColor;
+    state.lastAction={from,to:{y,x},capture:Boolean(captured)};
     if(!sandboxActive)recordMove(from,{y,x},moving,captured,beforePosition);
     selected=null;playMoveSound(Boolean(captured));
-    if(sandboxActive){sandboxHistory=sandboxHistory.slice(0,sandboxIndex+1);sandboxHistory.push(cloneState(state));sandboxIndex++;renderSandbox();render();showMoveEffects(Boolean(captured),state.winner,{y,x});return}
-    render();showMoveEffects(Boolean(captured),state.winner,{y,x});
+    const givesCheck=!state.winner&&inCheck(state.turn,state.board);
+    if(sandboxActive){sandboxHistory=sandboxHistory.slice(0,sandboxIndex+1);sandboxHistory.push(cloneState(state));sandboxIndex++;renderSandbox();render();showMoveEffects(Boolean(captured),state.winner,{y,x},givesCheck);return}
+    render();showMoveEffects(Boolean(captured),state.winner,{y,x},givesCheck);
     if(localMode){scheduleAiMove();return}
     socket.emit("move",{from,to:{y,x},state});return;
   }
@@ -303,7 +307,7 @@ function makeAiMove(){
   state.board[to.y][to.x]=moving;state.board[from.y][from.x]=null;lastMove={from,to,capture:Boolean(captured)};
   if(captured?.t==="K")state.winner=aiColor;state.turn=aiColor==="red"?"black":"red";
   if(!state.winner&&!hasAnyLegalMove(state.turn))state.winner=aiColor;
-  recordMove(from,to,moving,captured,beforePosition);aiThinking=false;playMoveSound(Boolean(captured));render();showMoveEffects(Boolean(captured),state.winner,to);
+  state.lastAction={from,to,capture:Boolean(captured)};recordMove(from,to,moving,captured,beforePosition);aiThinking=false;playMoveSound(Boolean(captured));const givesCheck=!state.winner&&inCheck(state.turn,state.board);render();showMoveEffects(Boolean(captured),state.winner,to,givesCheck);
 }
 function renderPlayers(){
   $("#players").innerHTML=players.map(p=>`<div class="player"><span>${escapeHtml(p.name)}</span><b class="${p.color}">${p.color==="red"?"紅方":p.color==="black"?"黑方":"觀戰"}</b></div>`).join("");
@@ -380,7 +384,7 @@ function toast(msg){$("#toast").textContent=msg;$("#toast").classList.add("show"
 socket.on("connect",()=>{$("#connection").classList.add("online");$("#connection").innerHTML="<i></i> 已連線"});
 socket.on("disconnect",()=>{$("#connection").classList.remove("online");$("#connection").innerHTML="<i></i> 重新連線中"});
 socket.on("players",p=>{players=p;renderPlayers()});
-socket.on("moved",data=>{const priorRequest=undoRequestedBy,base=(sandboxActive||replayActive)?(liveState||state):state,changed=JSON.stringify(base)!==JSON.stringify(data.state);undoRequestedBy=data.undoRequestedBy||null;if(sandboxActive||replayActive){liveState=cloneState(data.state);renderUndo();renderReplay();return}const remoteMove=detectMove(state,data.state);lastMove=remoteMove;state=data.state;selected=null;if(remoteMove)playMoveSound(remoteMove.capture);if(priorRequest===myColor&&!undoRequestedBy)toast(changed?"對方同意悔棋":"對方拒絕悔棋");render();if(remoteMove)showMoveEffects(remoteMove.capture,state.winner,remoteMove.to);renderUndo()});
+socket.on("moved",data=>{const priorRequest=undoRequestedBy,base=(sandboxActive||replayActive)?(liveState||state):state,changed=JSON.stringify(base)!==JSON.stringify(data.state);undoRequestedBy=data.undoRequestedBy||null;if(sandboxActive||replayActive){liveState=cloneState(data.state);renderUndo();renderReplay();return}const forward=(data.state.history?.length||0)>(state.history?.length||0),remoteMove=detectMove(state,data.state)||(forward?data.state.lastAction:null);lastMove=remoteMove;state=data.state;selected=null;if(remoteMove)playMoveSound(remoteMove.capture);if(priorRequest===myColor&&!undoRequestedBy)toast(changed?"對方同意悔棋":"對方拒絕悔棋");const givesCheck=Boolean(remoteMove&&!state.winner&&inCheck(state.turn,state.board));render();if(remoteMove)showMoveEffects(remoteMove.capture,state.winner,remoteMove.to,givesCheck);renderUndo()});
 socket.on("restarted",()=>{sandboxActive=false;replayActive=false;liveState=null;lastMove=null;state=initialState();selected=null;render();renderSandbox()});
 $("#join-form").onsubmit=e=>{
   e.preventDefault();ensureAudio();const id=$("#room").value.trim()||Math.random().toString(36).slice(2,8).toUpperCase();
