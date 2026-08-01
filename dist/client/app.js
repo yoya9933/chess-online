@@ -160,6 +160,9 @@ function detectMove(previous,next){
 }
 function render(){
   const animatedMove=lastMove;lastMove=null;
+  const blackView=myColor==="black",viewDirection=blackView?-1:1;
+  boardEl.classList.toggle("black-view",blackView);
+  boardEl.ariaLabel=`中國象棋棋盤，${blackView?"黑":"紅"}方視角`;
   boardEl.innerHTML="";
   const grid=document.createElement("div");grid.className="grid-lines";
   grid.innerHTML='<div class="river">楚 河　　　　漢 界</div><i class="palace top"></i><i class="palace bottom"></i>';
@@ -167,10 +170,10 @@ function render(){
   const targets=selected?movesFrom(selected):[];
   state.board.forEach((row,y)=>row.forEach((p,x)=>{
     const cell=document.createElement("div");cell.className="cell";cell.dataset.x=x;cell.dataset.y=y;
-    cell.style.setProperty("--x",x);cell.style.setProperty("--y",y);
+    cell.style.setProperty("--x",blackView?8-x:x);cell.style.setProperty("--y",blackView?9-y:y);
     const isTarget=targets.some(t=>t.x===x&&t.y===y);
     if(isTarget)cell.classList.add(p?"capture":"target");
-    if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125}%`)}cell.appendChild(el)}
+    if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125*viewDirection}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125*viewDirection}%`)}cell.appendChild(el)}
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
