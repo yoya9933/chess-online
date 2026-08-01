@@ -90,6 +90,9 @@ const socket = {
         selected = null;
         render();
         renderUndo();
+      } else if (event === "custom-setup") {
+        const data = await roomRequest("POST", { action: "custom-setup", roomId, token: playerToken, state: payload.state });
+        stateRevision = data.revision; state = data.state; undoRequestedBy = null; selected = null; lastMove = null; render(); renderUndo();
       }
     } catch (error) {
       toast(error.message);
@@ -108,6 +111,7 @@ let undoRequestedBy = null;
 let sandboxActive = false, liveState = null, sandboxHistory = [], sandboxIndex = 0;
 let replayActive = false, replayIndex = 0;
 let localMode = false, aiThinking = false;
+let setupActive = false, setupBase = null;
 let soundEnabled = localStorage.getItem("xiangqi-sound") !== "off";
 let audioContext = null;
 
@@ -252,7 +256,7 @@ function detectMove(previous,next){
 function render(){
   const animatedMove=lastMove;lastMove=null;
   const displayedMove=state.lastAction||animatedMove;
-  const checkedColor=!state.winner&&inCheck(state.turn,state.board)?state.turn:null;
+  const checkedColor=!setupActive&&!state.winner&&inCheck(state.turn,state.board)?state.turn:null;
   const blackView=myColor==="black",viewDirection=blackView?-1:1;
   boardEl.classList.toggle("black-view",blackView);
   boardEl.ariaLabel=`中國象棋棋盤，${blackView?"黑":"紅"}方視角`;
@@ -275,10 +279,16 @@ function render(){
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
-  $("#status").textContent=replayActive?`棋譜回放 · 第 ${replayIndex}/${Math.max(0,(liveState?.history?.length||1)-1)} 手`:sandboxActive?`沙盤推演 · ${colorName}試走`:state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(aiThinking?"電腦思考中…":!localMode&&players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
+  $("#status").textContent=setupActive?"自訂棋局 · 選擇棋子後點擊棋盤放置":replayActive?`棋譜回放 · 第 ${replayIndex}/${Math.max(0,(liveState?.history?.length||1)-1)} 手`:sandboxActive?`沙盤推演 · ${colorName}試走`:state.winner?`${state.winner==="red"?"紅方":"黑方"}勝出`:(aiThinking?"電腦思考中…":!localMode&&players.length<2?"等待棋友加入…":inCheck(state.turn,state.board)?`${colorName}被將軍`:`${colorName}行棋`);
   renderReplay();
 }
 function clickCell(y,x,isTarget){
+  if(setupActive){
+    const choice=$("#setup-piece").value;
+    if(choice==="erase")state.board[y][x]=null;
+    else{const [c,t]=choice.split(":");if(t==="K")for(let row=0;row<10;row++)for(let col=0;col<9;col++)if(state.board[row][col]?.c===c&&state.board[row][col]?.t==="K")state.board[row][col]=null;state.board[y][x]={c,t}}
+    selected=null;state.lastAction=null;render();return;
+  }
   if(replayActive)return;
   const activeColor = sandboxActive ? state.turn : myColor === "local" ? state.turn : myColor;
   if(aiThinking||state.winner||activeColor!==state.turn||(!sandboxActive&&!localMode&&players.filter(p=>p.color!=="spectator").length<2))return;
@@ -315,14 +325,14 @@ function startLocal(color,name){
   scheduleAiMove();
 }
 function scheduleAiMove(effectDelay=0){
-  if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor)return;
+  if(!localMode||sandboxActive||replayActive||setupActive||state.winner||state.turn===myColor)return;
   setTimeout(()=>{
-    if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor)return;
+    if(!localMode||sandboxActive||replayActive||setupActive||state.winner||state.turn===myColor)return;
     aiThinking=true;render();setTimeout(makeAiMove,500);
   },effectDelay);
 }
 function makeAiMove(){
-  if(!localMode||sandboxActive||replayActive||state.winner||state.turn===myColor){aiThinking=false;render();return}
+  if(!localMode||sandboxActive||replayActive||setupActive||state.winner||state.turn===myColor){aiThinking=false;render();return}
   const values={K:10000,R:90,C:50,H:45,E:25,A:25,P:15},choices=[];
   for(let y=0;y<10;y++)for(let x=0;x<9;x++)if(state.board[y][x]?.c===state.turn){
     for(let ty=0;ty<10;ty++)for(let tx=0;tx<9;tx++)if(legal({y,x},{y:ty,x:tx})){
@@ -358,7 +368,7 @@ function renderUndo(){
   const panel=$("#undo-panel"),response=$("#undo-response"),request=$("#undo-request");
   const isPlayer=!localMode&&(myColor==="red"||myColor==="black");
   request.classList.toggle("hidden",!isPlayer);
-  request.disabled=sandboxActive||replayActive||!isPlayer||Boolean(undoRequestedBy)||(state.history?.length||0)<=1||players.length<2;
+  request.disabled=sandboxActive||replayActive||setupActive||!isPlayer||Boolean(undoRequestedBy)||(state.history?.length||0)<=1||players.length<2;
   if(!undoRequestedBy){panel.classList.add("hidden");return}
   panel.classList.remove("hidden");
   const mine=undoRequestedBy===myColor;
@@ -366,11 +376,23 @@ function renderUndo(){
   response.classList.toggle("hidden",mine||!isPlayer);
 }
 function renderSandbox(){
-  $("#sandbox-enter").classList.toggle("hidden",sandboxActive||replayActive);
+  $("#sandbox-enter").classList.toggle("hidden",sandboxActive||replayActive||setupActive);
+  $("#setup-enter").classList.toggle("hidden",sandboxActive||replayActive||setupActive);
   $("#sandbox-controls").classList.toggle("hidden",!sandboxActive);
+  $("#setup-controls").classList.toggle("hidden",!setupActive);
   $("#sandbox-prev").disabled=!sandboxActive||sandboxIndex===0;
   $("#sandbox-next").disabled=!sandboxActive||sandboxIndex>=sandboxHistory.length-1;
-  $("#restart").disabled=sandboxActive||replayActive;
+  $("#restart").disabled=sandboxActive||replayActive||setupActive;
+}
+function enterSetup(){setupBase=cloneState(state);setupActive=true;aiThinking=false;selected=null;lastMove=null;state=cloneState(state);state.winner=null;state.lastAction=null;renderSandbox();render();renderUndo()}
+function clearSetup(){state.board=Array.from({length:10},()=>Array(9).fill(null));state.lastAction=null;render()}
+function standardSetup(){const fresh=initialState();state.board=fresh.board;state.turn=$("#setup-turn").value;state.lastAction=null;render()}
+function cancelSetup(){setupActive=false;state=cloneState(setupBase||state);setupBase=null;selected=null;renderSandbox();render();renderUndo();scheduleAiMove()}
+function saveSetup(){
+  const kings={red:0,black:0};state.board.flat().forEach(p=>{if(p?.t==="K")kings[p.c]++});
+  if(kings.red!==1||kings.black!==1){toast("紅帥與黑將都必須各有一枚");return}
+  state.turn=$("#setup-turn").value;state.winner=null;state.history=[];state.lastAction=null;setupActive=false;setupBase=null;selected=null;renderSandbox();render();renderUndo();
+  if(localMode)scheduleAiMove();else socket.emit("custom-setup",{state});
 }
 function enterSandbox(){
   if(!replayActive)liveState=cloneState(state);
@@ -429,6 +451,11 @@ $("#undo-reject").onclick=()=>socket.emit("respond-undo",{accept:false});
 $("#choose-red").onclick=()=>changeSide("red");
 $("#choose-black").onclick=()=>changeSide("black");
 $("#sandbox-enter").onclick=enterSandbox;
+$("#setup-enter").onclick=enterSetup;
+$("#setup-clear").onclick=clearSetup;
+$("#setup-standard").onclick=standardSetup;
+$("#setup-save").onclick=saveSetup;
+$("#setup-cancel").onclick=cancelSetup;
 $("#sandbox-prev").onclick=()=>stepSandbox(-1);
 $("#sandbox-next").onclick=()=>stepSandbox(1);
 $("#sandbox-exit").onclick=exitSandbox;

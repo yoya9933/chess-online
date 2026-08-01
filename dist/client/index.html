@@ -102,10 +102,22 @@
         <div id="status" class="status">等待棋友加入…</div>
         <div id="sandbox-toolbar" class="sandbox-toolbar">
           <button id="sandbox-enter" class="secondary" type="button">沙盤推演</button>
+          <button id="setup-enter" class="secondary" type="button">自訂棋局</button>
           <div id="sandbox-controls" class="hidden">
             <button id="sandbox-prev" class="secondary" type="button">上一步</button>
             <button id="sandbox-next" class="secondary" type="button">下一步</button>
             <button id="sandbox-exit" class="secondary" type="button">退出推演</button>
+          </div>
+          <div id="setup-controls" class="setup-controls hidden">
+            <label>棋子<select id="setup-piece">
+              <option value="red:R">紅俥</option><option value="red:H">紅傌</option><option value="red:E">紅相</option><option value="red:A">紅仕</option><option value="red:K">紅帥</option><option value="red:C">紅炮</option><option value="red:P">紅兵</option>
+              <option value="black:R">黑車</option><option value="black:H">黑馬</option><option value="black:E">黑象</option><option value="black:A">黑士</option><option value="black:K">黑將</option><option value="black:C">黑砲</option><option value="black:P">黑卒</option><option value="erase">橡皮擦</option>
+            </select></label>
+            <label>先行<select id="setup-turn"><option value="red">紅方</option><option value="black">黑方</option></select></label>
+            <button id="setup-clear" class="secondary" type="button">清空</button>
+            <button id="setup-standard" class="secondary" type="button">標準開局</button>
+            <button id="setup-save" class="secondary" type="button">開始對弈</button>
+            <button id="setup-cancel" class="secondary" type="button">取消</button>
           </div>
         </div>
         <div id="board" class="board" aria-label="中國象棋棋盤"></div>

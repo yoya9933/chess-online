@@ -6419,6 +6419,14 @@ async function POST(request) {
       await db.prepare(
         "UPDATE rooms SET state = ?, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
       ).bind(JSON.stringify(initialState()), now, roomId).run();
+    } else if (action === "custom-setup") {
+      const customState = body.state;
+      if (!customState?.board || customState.board.length !== 10 || !["red", "black"].includes(customState.turn)) {
+        return json({ error: "自訂棋局資料無效" }, 400);
+      }
+      await db.prepare(
+        "UPDATE rooms SET state = ?, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
+      ).bind(JSON.stringify(customState), now, roomId).run();
     } else {
       return json({ error: "未知操作" }, 400);
     }
