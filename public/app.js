@@ -191,7 +191,7 @@ function pseudoLegal(f,t,b){
 }
 function cloneBoard(b){return b.map(r=>r.map(p=>p?{...p}:null))}
 function cloneState(value){return JSON.parse(JSON.stringify(value))}
-function positionSnapshot(value){return {board:cloneBoard(value.board),turn:value.turn,winner:value.winner||null}}
+function positionSnapshot(value){return {board:cloneBoard(value.board),turn:value.turn,winner:value.winner||null,lastAction:value.lastAction?cloneState(value.lastAction):null}}
 function recordMove(from,to,moving,captured,beforePosition){
   if(!Array.isArray(state.history)||!state.history.length)state.history=[{label:"開局",position:beforePosition}];
   const side=moving.c==="red"?"紅":"黑",piece=names[moving.c][moving.t],verb=captured?"吃":"走至";
@@ -233,6 +233,8 @@ function detectMove(previous,next){
 }
 function render(){
   const animatedMove=lastMove;lastMove=null;
+  const displayedMove=animatedMove||state.lastAction;
+  const checkedColor=!state.winner&&inCheck(state.turn,state.board)?state.turn:null;
   const blackView=myColor==="black",viewDirection=blackView?-1:1;
   boardEl.classList.toggle("black-view",blackView);
   boardEl.ariaLabel=`中國象棋棋盤，${blackView?"黑":"紅"}方視角`;
@@ -245,8 +247,10 @@ function render(){
     const cell=document.createElement("div");cell.className="cell";cell.dataset.x=x;cell.dataset.y=y;
     cell.style.setProperty("--x",blackView?8-x:x);cell.style.setProperty("--y",blackView?9-y:y);
     const isTarget=targets.some(t=>t.x===x&&t.y===y);
+    if(displayedMove?.from.x===x&&displayedMove?.from.y===y)cell.classList.add("last-from");
+    if(displayedMove?.to.x===x&&displayedMove?.to.y===y)cell.classList.add("last-to");
     if(isTarget)cell.classList.add(p?"capture":"target");
-    if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125*viewDirection}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125*viewDirection}%`)}cell.appendChild(el)}
+    if(p){const el=document.createElement("button");el.className=`piece ${p.c}`+(selected?.x===x&&selected?.y===y?" selected":"")+(p.t==="K"&&p.c===checkedColor?" checked":"");el.textContent=names[p.c][p.t];el.ariaLabel=`${p.c==="red"?"紅":"黑"}方${el.textContent}${p.t==="K"&&p.c===checkedColor?"，被將軍":""}`;if(animatedMove?.to.x===x&&animatedMove?.to.y===y){el.classList.add("moving");el.style.setProperty("--move-x",`${(animatedMove.from.x-x)*125*viewDirection}%`);el.style.setProperty("--move-y",`${(animatedMove.from.y-y)*125*viewDirection}%`)}cell.appendChild(el)}
     cell.onclick=()=>clickCell(y,x,isTarget);boardEl.appendChild(cell);
   }));
   const colorName=state.turn==="red"?"紅方":"黑方";
