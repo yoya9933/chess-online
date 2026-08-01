@@ -288,7 +288,7 @@ function render(){
 function renderCaptured(){
   const panel=$("#captured-panel"),list=$("#captured-list"),visible=state.variant==="jieqi"&&(myColor==="red"||myColor==="black");
   panel.classList.toggle("hidden",!visible);if(!visible)return;
-  const group=(side,label)=>{const items=state.captures?.[side]||[],chips=items.map(item=>{const concealed=side!==myColor&&item.hidden!==false,kind=concealed?"暗":names[item.c]?.[item.t]||"暗";return `<span class="captured-chip ${item.c}${concealed?" covered-capture":""}" title="${concealed?"暗子真身僅對方可見":`${kind}（明子）`}">${kind}</span>`}).join("");return `<div class="captured-group"><b>${label}</b><div class="captured-row">${chips||"<em>尚無吃子</em>"}</div></div>`};
+  const group=(side,label)=>{const items=state.captures?.[side]||[],chips=items.map(item=>{const concealed=side!==myColor&&item.hidden!==false,kind=concealed?"?":names[item.c]?.[item.t]||"暗",hint=concealed?"暗子已封存，真身僅對方可見":`${kind}（明子）`;return `<span class="captured-chip ${item.c}${concealed?" covered-capture":""}" title="${hint}" aria-label="${hint}">${kind}</span>`}).join("");return `<div class="captured-group"><b>${label}</b><div class="captured-row">${chips||"<em>尚無吃子</em>"}</div></div>`};
   const opponent=myColor==="red"?"black":"red";
   list.innerHTML=group(myColor,"我方吃子")+group(opponent,"對方吃子");
 }
