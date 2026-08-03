@@ -6214,25 +6214,15 @@ function getSSRFontStyles() {
 function getSSRFontPreloads() {
   return [...ssrFontPreloads];
 }
-const roomsSchema = `
-CREATE TABLE IF NOT EXISTS rooms (
-  room_id TEXT PRIMARY KEY,
-  state TEXT NOT NULL,
-  revision INTEGER NOT NULL DEFAULT 0,
-  red_token TEXT,
-  red_name TEXT,
-  red_seen INTEGER,
-  black_token TEXT,
-  black_name TEXT,
-  black_seen INTEGER,
-  previous_state TEXT,
-  undo_requested_by TEXT,
-  updated_at INTEGER NOT NULL
-)`;
-const roomsUpdatedIndex = "CREATE INDEX IF NOT EXISTS rooms_updated_at_idx ON rooms(updated_at)";
 const runtime = "edge";
 const dynamic = "force-dynamic";
 const STALE_AFTER_MS = 12e4;
+const roomsSchema = `CREATE TABLE IF NOT EXISTS rooms (
+  room_id TEXT PRIMARY KEY, state TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0,
+  red_token TEXT, red_name TEXT, red_seen BIGINT, black_token TEXT, black_name TEXT,
+  black_seen BIGINT, previous_state TEXT, undo_requested_by TEXT, updated_at BIGINT NOT NULL
+)`;
+const roomsUpdatedIndex = "CREATE INDEX IF NOT EXISTS rooms_updated_at_idx ON rooms(updated_at)";
 function initialState(variant = "standard") {
   const board = Array.from({ length: 10 }, () => Array(9).fill(null));
   const row = ["R", "H", "E", "A", "K", "A", "E", "H", "R"];
@@ -6307,6 +6297,36 @@ function json(data, status = 200) {
   });
 }
 async function database() {
+  if (process.env.DATABASE_URL) {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL, { fullResults: true });
+    const prepare = (query) => {
+      const statement = {
+        params: [],
+        bind(...params) {
+          this.params = params;
+          return this;
+        },
+        async execute() {
+          let index = 0;
+          const postgresQuery = query.replace(/\?/g, () => `$${++index}`);
+          return sql.query(postgresQuery, this.params);
+        },
+        async first() {
+          const result = await this.execute();
+          return result.rows?.[0] || null;
+        },
+        async run() {
+          const result = await this.execute();
+          return { meta: { changes: result.rowCount || 0 } };
+        }
+      };
+      return statement;
+    };
+    await prepare(roomsSchema).run();
+    await prepare(roomsUpdatedIndex).run();
+    return { prepare };
+  }
   const { env } = await import("cloudflare:workers");
   if (!env.DB) throw new Error("DB binding is unavailable");
   await env.DB.batch([
