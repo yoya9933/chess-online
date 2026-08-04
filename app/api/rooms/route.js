@@ -2,12 +2,6 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const STALE_AFTER_MS = 120_000;
-const roomsSchema = `CREATE TABLE IF NOT EXISTS rooms (
-  room_id TEXT PRIMARY KEY, state TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0,
-  red_token TEXT, red_name TEXT, red_seen BIGINT, black_token TEXT, black_name TEXT,
-  black_seen BIGINT, previous_state TEXT, undo_requested_by TEXT, updated_at BIGINT NOT NULL
-)`;
-const roomsUpdatedIndex = "CREATE INDEX IF NOT EXISTS rooms_updated_at_idx ON rooms(updated_at)";
 
 function initialState(variant = "standard") {
   const board = Array.from({ length: 10 }, () => Array(9).fill(null));
@@ -89,17 +83,11 @@ async function database() {
       };
       return statement;
     };
-    await prepare(roomsSchema).run();
-    await prepare(roomsUpdatedIndex).run();
     return { prepare };
   }
   const cloudflareRuntime = "cloudflare:workers";
   const { env } = await import(cloudflareRuntime);
   if (!env.DB) throw new Error("DB binding is unavailable");
-  await env.DB.batch([
-    env.DB.prepare(roomsSchema),
-    env.DB.prepare(roomsUpdatedIndex),
-  ]);
   return env.DB;
 }
 
@@ -169,14 +157,29 @@ export async function POST(request) {
     if (action === "join") {
       const preferredColor = body.preferredColor === "black" ? "black" : "red";
       const gameVariant = body.gameVariant === "jieqi" ? "jieqi" : "standard";
+      const playerName = cleanName(body.name);
       if (!room) {
         const column = preferredColor === "red" ? "red" : "black";
+        const state = initialState(gameVariant);
         await db.prepare(
           `INSERT INTO rooms
            (room_id, state, revision, ${column}_token, ${column}_name, ${column}_seen, updated_at)
            VALUES (?, ?, 0, ?, ?, ?, ?)`
-        ).bind(roomId, JSON.stringify(initialState(gameVariant)), token, cleanName(body.name), now, now).run();
-        room = await getRoom(db, roomId);
+        ).bind(roomId, JSON.stringify(state), token, playerName, now, now).run();
+        room = {
+          room_id: roomId,
+          state: JSON.stringify(state),
+          revision: 0,
+          red_token: preferredColor === "red" ? token : null,
+          red_name: preferredColor === "red" ? playerName : null,
+          red_seen: preferredColor === "red" ? now : null,
+          black_token: preferredColor === "black" ? token : null,
+          black_name: preferredColor === "black" ? playerName : null,
+          black_seen: preferredColor === "black" ? now : null,
+          previous_state: null,
+          undo_requested_by: null,
+          updated_at: now,
+        };
         return json(publicRoom(room, token));
       }
 
@@ -184,20 +187,29 @@ export async function POST(request) {
       const blackStale = room.black_token && now - Number(room.black_seen || 0) > STALE_AFTER_MS;
       if (token === room.red_token) {
         await db.prepare("UPDATE rooms SET red_name = ?, red_seen = ? WHERE room_id = ?")
-          .bind(cleanName(body.name), now, roomId).run();
+          .bind(playerName, now, roomId).run();
+        room.red_name = playerName;
+        room.red_seen = now;
       } else if (token === room.black_token) {
         await db.prepare("UPDATE rooms SET black_name = ?, black_seen = ? WHERE room_id = ?")
-          .bind(cleanName(body.name), now, roomId).run();
+          .bind(playerName, now, roomId).run();
+        room.black_name = playerName;
+        room.black_seen = now;
       } else if (preferredColor === "red" && (!room.red_token || redStale)) {
         await db.prepare("UPDATE rooms SET red_token = ?, red_name = ?, red_seen = ? WHERE room_id = ?")
-          .bind(token, cleanName(body.name), now, roomId).run();
+          .bind(token, playerName, now, roomId).run();
+        room.red_token = token;
+        room.red_name = playerName;
+        room.red_seen = now;
       } else if (preferredColor === "black" && (!room.black_token || blackStale)) {
         await db.prepare("UPDATE rooms SET black_token = ?, black_name = ?, black_seen = ? WHERE room_id = ?")
-          .bind(token, cleanName(body.name), now, roomId).run();
+          .bind(token, playerName, now, roomId).run();
+        room.black_token = token;
+        room.black_name = playerName;
+        room.black_seen = now;
       } else {
         return json({ error: preferredColor === "red" ? "紅方席位已有人，請選擇黑方" : "黑方席位已有人，請選擇紅方" }, 409);
       }
-      room = await getRoom(db, roomId);
       return json(publicRoom(room, token));
     }
 
