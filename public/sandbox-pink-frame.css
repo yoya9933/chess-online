@@ -2,11 +2,51 @@
   outline: 3px solid #ff78bd;
   outline-offset: 8px;
   filter: drop-shadow(0 0 10px rgba(255, 120, 189, 0.55));
+  overflow: hidden;
+}
+
+.board-area:has(#sandbox-controls:not(.hidden)) .board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 120, 189, 0.08) 42%,
+    rgba(255, 191, 224, 0.82) 50%,
+    rgba(255, 120, 189, 0.08) 58%,
+    transparent 100%
+  );
+  transform: translateY(-110%);
+  animation: sandboxPinkScan 0.9s ease-out 1 forwards;
+}
+
+@keyframes sandboxPinkScan {
+  0% {
+    opacity: 0;
+    transform: translateY(-110%);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(110%);
+  }
 }
 
 @media (max-width: 700px) {
   .board-area:has(#sandbox-controls:not(.hidden)) .board {
     outline-width: 2px;
     outline-offset: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-area:has(#sandbox-controls:not(.hidden)) .board::after {
+    animation: none;
+    display: none;
   }
 }
