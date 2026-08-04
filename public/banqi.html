@@ -84,5 +84,22 @@
   </main>
   <div id="toast" class="toast"></div>
   <script src="/banqi.js"></script>
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      if (params.get("autostart") !== "1") return;
+      const mode = params.get("mode") === "online" ? "online" : "local";
+      const modeInput = document.querySelector(`input[name="banqi-mode"][value="${mode}"]`);
+      if (modeInput) {
+        modeInput.checked = true;
+        modeInput.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      const name = params.get("name");
+      if (name) document.getElementById("name").value = name.slice(0, 16);
+      const room = params.get("room");
+      if (room) document.getElementById("room").value = room.slice(0, 6).toUpperCase();
+      requestAnimationFrame(() => document.getElementById("join-form").requestSubmit());
+    })();
+  </script>
 </body>
 </html>
