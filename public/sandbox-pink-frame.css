@@ -1,5 +1,4 @@
-.board-area:has(#sandbox-controls:not(.hidden)) .board,
-body.sandbox-exiting .board-area .board {
+.board-area:has(#sandbox-controls:not(.hidden)) .board {
   outline: 3px solid #ff78bd;
   outline-offset: 8px;
   filter: drop-shadow(0 0 12px rgba(255, 120, 189, 0.65));
@@ -28,27 +27,6 @@ body.sandbox-exiting .board-area .board {
   animation: sandboxPinkScan 1.15s cubic-bezier(.22,.7,.2,1) 1 both;
 }
 
-.sandbox-exit-scan-layer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: 18%;
-  z-index: 100;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255, 120, 189, 0.2) 24%,
-    rgba(255, 240, 249, 1) 50%,
-    rgba(255, 120, 189, 0.48) 66%,
-    transparent 100%
-  );
-  box-shadow: 0 0 28px rgba(255, 120, 189, 1);
-  animation: sandboxPinkExitScan 1.15s cubic-bezier(.22,.7,.2,1) 1 both;
-}
-
 @keyframes sandboxPinkScan {
   0% {
     top: -18%;
@@ -66,34 +44,15 @@ body.sandbox-exiting .board-area .board {
   }
 }
 
-@keyframes sandboxPinkExitScan {
-  0% {
-    top: 100%;
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  82% {
-    opacity: 1;
-  }
-  100% {
-    top: -18%;
-    opacity: 0;
-  }
-}
-
 @media (max-width: 700px) {
-  .board-area:has(#sandbox-controls:not(.hidden)) .board,
-  body.sandbox-exiting .board-area .board {
+  .board-area:has(#sandbox-controls:not(.hidden)) .board {
     outline-width: 2px;
     outline-offset: 5px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .board-area:has(#sandbox-controls:not(.hidden)) .board::after,
-  .sandbox-exit-scan-layer {
+  .board-area:has(#sandbox-controls:not(.hidden)) .board::after {
     animation: none;
     display: none;
   }
