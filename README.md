@@ -18,3 +18,4 @@ npm run dev
 同步最新棋步，斷線後使用原房間連結即可重新加入。
 
 原本的 Socket.IO 伺服器仍保留在 `server.js`，僅供傳統 Node.js 主機使用。
+Vercel deployment test
