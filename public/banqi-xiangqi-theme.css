@@ -1,0 +1,153 @@
+/* Align the Banqi board with the Xiangqi arena visual system. */
+.board{
+  isolation:isolate;
+  gap:5px;
+  padding:12px;
+  border:1px solid rgba(75,215,231,.34);
+  border-radius:4px;
+  background-color:#080d12;
+  background-image:
+    linear-gradient(rgba(84,215,232,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(84,215,232,.055) 1px,transparent 1px),
+    radial-gradient(circle at 50% 48%,#123442 0,#09131b 43%,#05080c 100%);
+  background-size:22px 22px,22px 22px,100% 100%;
+  box-shadow:
+    0 22px 70px rgba(0,0,0,.78),
+    0 0 0 1px rgba(75,215,231,.28),
+    0 0 32px rgba(24,186,215,.2),
+    inset 0 0 0 4px #030608,
+    inset 0 0 0 7px #172c35,
+    inset 0 0 42px #071017;
+}
+.board:before{
+  content:"";
+  position:absolute;
+  inset:12px;
+  z-index:-1;
+  pointer-events:none;
+  border:1px solid rgba(87,215,227,.64);
+  box-shadow:0 0 8px rgba(25,188,216,.35),inset 0 0 18px rgba(18,83,99,.2);
+}
+.cell{
+  border:1px solid rgba(87,215,227,.6);
+  border-radius:0;
+  background:rgba(5,16,22,.2);
+  box-shadow:inset 0 0 10px rgba(20,119,137,.08);
+}
+.cell:nth-child(odd){background:rgba(9,29,37,.25)}
+.cell:hover{background:rgba(27,91,104,.2)}
+.cell.target:after{
+  width:13px;
+  height:13px;
+  border-radius:50%;
+  background:#62f4c8;
+  box-shadow:0 0 10px #38f8c9;
+}
+.cell.capture:after{
+  width:76%;
+  height:76%;
+  border:3px solid #ff5260;
+  border-radius:50%;
+  background:transparent;
+  box-shadow:0 0 14px #ff334d,inset 0 0 10px rgba(255,51,77,.18);
+}
+.piece{
+  border:2px solid currentColor;
+  background:linear-gradient(145deg,#e8eef0,#aebbc0);
+  box-shadow:
+    0 5px 9px rgba(0,0,0,.78),
+    0 0 0 1px rgba(191,239,242,.66),
+    0 0 12px rgba(53,207,227,.2),
+    inset 0 0 0 3px #dbe3e4,
+    inset 0 0 0 4px currentColor;
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+}
+.piece.red{
+  color:#d5333b;
+  background:linear-gradient(145deg,#fff0e8,#c9b3ad);
+  text-shadow:0 0 8px rgba(255,56,72,.32);
+}
+.piece.black{
+  color:#07333b;
+  border-color:#0b5c68;
+  background:linear-gradient(145deg,#d8fbff,#71bec8);
+  text-shadow:0 1px 0 #eaffff;
+}
+.piece:hover{
+  transform:translateY(-3px);
+  filter:brightness(1.08);
+  box-shadow:0 8px 14px rgba(0,0,0,.82),0 0 0 2px rgba(191,250,255,.7),0 0 18px rgba(56,220,237,.35),inset 0 0 0 3px #dbe3e4,inset 0 0 0 4px currentColor;
+}
+.piece.selected{
+  transform:translateY(-5px);
+  filter:none;
+  box-shadow:0 8px 14px rgba(0,0,0,.85),0 0 0 3px #bffaff,0 0 22px #38dced,inset 0 0 0 3px #dbe3e4,inset 0 0 0 4px currentColor;
+}
+.piece.covered{
+  font-size:0;
+  color:#87dce4;
+  border-color:#4c9ca8;
+  background:
+    radial-gradient(circle at 32% 25%,rgba(108,226,236,.2),transparent 23%),
+    repeating-radial-gradient(circle at center,transparent 0 10%,rgba(78,189,200,.08) 10.5% 12%,transparent 12.5% 19%),
+    linear-gradient(145deg,#17343d,#071117 70%);
+  box-shadow:
+    0 6px 12px rgba(0,0,0,.82),
+    0 0 0 1px rgba(118,222,231,.42),
+    0 0 13px rgba(54,214,228,.2),
+    inset 0 0 0 3px #0b2028,
+    inset 0 0 0 4px #4b9da8,
+    inset 0 -10px 17px rgba(0,0,0,.45);
+}
+.piece.covered:before{
+  content:"暗";
+  display:grid;
+  place-items:center;
+  width:58%;
+  aspect-ratio:1;
+  border:1px solid rgba(115,226,235,.58);
+  border-radius:20%;
+  color:#a7edf1;
+  background:rgba(7,24,31,.72);
+  box-shadow:0 0 0 2px rgba(4,16,21,.8),0 0 9px rgba(65,213,225,.25),inset 0 0 8px rgba(76,213,224,.14);
+  font:900 clamp(17px,3vw,30px) "Noto Serif TC",serif;
+  text-shadow:0 0 7px rgba(117,238,245,.46);
+  transform:rotate(45deg);
+}
+.piece.covered:after{
+  content:"";
+  position:absolute;
+  inset:14%;
+  border:1px solid rgba(116,216,224,.2);
+  border-radius:50%;
+  pointer-events:none;
+}
+.piece.covered:hover,.piece.covered.selected{
+  border-color:#79e8ef;
+  box-shadow:0 8px 14px rgba(0,0,0,.85),0 0 0 2px rgba(191,250,255,.7),0 0 22px rgba(56,220,237,.65),inset 0 0 0 3px #0b2028,inset 0 0 0 4px #65d8e1;
+}
+.piece.covered:before{line-height:1}
+.piece.covered:before{transform:rotate(45deg)}
+.piece.covered{overflow:hidden}
+.piece.reveal{animation:banqi-xiangqi-reveal .48s cubic-bezier(.22,.8,.25,1)}
+@keyframes banqi-xiangqi-reveal{
+  0%{transform:perspective(180px) rotateY(88deg) scale(.86);filter:brightness(1.7)}
+  70%{transform:perspective(180px) rotateY(-8deg) scale(1.04)}
+  100%{transform:perspective(180px) rotateY(0) scale(1);filter:brightness(1)}
+}
+.rules{
+  border-color:rgba(71,203,213,.3);
+  border-radius:0;
+  background:#07171f;
+}
+.rules b{color:#64e5ef}
+@media(max-width:850px){
+  .board{padding:7px;gap:4px}
+  .board:before{inset:7px}
+}
+@media(max-width:520px){
+  .board{padding:5px;gap:3px}
+  .board:before{inset:5px}
+  .piece.covered:before{font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){.piece.reveal{animation:none}}
