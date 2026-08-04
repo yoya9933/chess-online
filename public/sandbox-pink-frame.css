@@ -1,39 +1,46 @@
 .board-area:has(#sandbox-controls:not(.hidden)) .board {
   outline: 3px solid #ff78bd;
   outline-offset: 8px;
-  filter: drop-shadow(0 0 10px rgba(255, 120, 189, 0.55));
+  filter: drop-shadow(0 0 12px rgba(255, 120, 189, 0.65));
   overflow: hidden;
 }
 
 .board-area:has(#sandbox-controls:not(.hidden)) .board::after {
   content: "";
   position: absolute;
-  inset: 0;
-  z-index: 8;
+  left: 0;
+  right: 0;
+  top: -18%;
+  height: 18%;
+  z-index: 20;
   pointer-events: none;
+  opacity: 0;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(255, 120, 189, 0.08) 42%,
-    rgba(255, 191, 224, 0.82) 50%,
-    rgba(255, 120, 189, 0.08) 58%,
+    rgba(255, 120, 189, 0.16) 28%,
+    rgba(255, 230, 244, 0.96) 50%,
+    rgba(255, 120, 189, 0.38) 62%,
     transparent 100%
   );
-  transform: translateY(-110%);
-  animation: sandboxPinkScan 0.9s ease-out 1 forwards;
+  box-shadow: 0 0 22px rgba(255, 120, 189, 0.95);
+  animation: sandboxPinkScan 1.15s cubic-bezier(.22,.7,.2,1) 1 both;
 }
 
 @keyframes sandboxPinkScan {
   0% {
+    top: -18%;
     opacity: 0;
-    transform: translateY(-110%);
   }
-  18% {
+  12% {
+    opacity: 1;
+  }
+  82% {
     opacity: 1;
   }
   100% {
+    top: 100%;
     opacity: 0;
-    transform: translateY(110%);
   }
 }
 
