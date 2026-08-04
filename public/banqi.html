@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050a0f">
+  <title>楚河棋局｜線上暗棋</title>
+  <meta name="description" content="免註冊，開房即玩的線上暗棋。翻棋決定陣營，與朋友即時對戰。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/banqi.css">
+</head>
+<body>
+  <main>
+    <header>
+      <a class="brand" href="/">楚河<span>棋局</span></a>
+      <div id="connection" class="connection"><i></i> 連線中</div>
+    </header>
+
+    <section id="lobby" class="lobby">
+      <div class="intro">
+        <p class="eyebrow">ONLINE BANQI</p>
+        <h1>翻開未知棋子，<br><em>在半盤之間決勝。</em></h1>
+        <p>台灣暗棋規則。32 枚棋子隨機覆蓋，第一枚翻開的棋子決定雙方陣營。</p>
+        <div class="features"><span>4 × 8 棋盤</span><span>即時同步</span><span>跨裝置對戰</span></div>
+        <a class="back-link" href="/">← 返回象棋模式</a>
+      </div>
+      <form id="join-form" class="join-card">
+        <p class="seal">暗</p>
+        <h2>入局</h2>
+        <label>你的稱呼<input id="name" maxlength="16" placeholder="例如：棋痴老王" required></label>
+        <label>房間代碼<input id="room" maxlength="6" placeholder="留空即可建立新房"></label>
+        <button type="submit">開始暗棋 <span>→</span></button>
+        <small>建立房間後，分享連結邀請棋友加入</small>
+      </form>
+    </section>
+
+    <section id="game" class="game hidden">
+      <aside class="game-info">
+        <div>
+          <p class="eyebrow">PRIVATE BANQI</p>
+          <h2>好友暗棋</h2>
+          <p id="room-label" class="room-label"></p>
+          <div class="tool-grid">
+            <button id="copy-link" class="secondary" type="button">複製邀請連結</button>
+            <button id="sound-toggle" class="secondary" type="button" aria-pressed="true">音效：開</button>
+          </div>
+        </div>
+        <div id="players" class="players"></div>
+        <section class="side-section">
+          <p class="side-title">吃子紀錄</p>
+          <div id="captures" class="captures"></div>
+        </section>
+        <div id="undo-panel" class="undo-panel hidden">
+          <p id="undo-message"></p>
+          <div id="undo-actions" class="undo-actions hidden">
+            <button id="undo-accept" class="secondary" type="button">同意</button>
+            <button id="undo-reject" class="secondary" type="button">拒絕</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="undo-request" class="text-button" type="button">請求悔棋</button>
+          <button id="restart" class="text-button" type="button">重新開局</button>
+          <a href="/" class="text-button">離開棋局</a>
+        </div>
+      </aside>
+
+      <div class="board-area">
+        <div id="status" class="status">等待棋友加入…</div>
+        <div id="assignment" class="assignment">翻開第一枚棋子後決定陣營</div>
+        <div id="board" class="board" aria-label="暗棋棋盤"></div>
+        <div class="rules">
+          <b>規則提示</b>
+          <span>棋子通常走一格；炮隔一子吃；兵卒可吃將帥；將帥不能吃兵卒。</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="/banqi.js"></script>
+</body>
+</html>
