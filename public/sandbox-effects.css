@@ -1,0 +1,23 @@
+/* Tactical visual effects for sandbox simulation mode. */
+body.sandbox-visual-active .board-area{position:relative}
+body.sandbox-visual-active .board-area::before{content:"SANDBOX · TACTICAL SIMULATION";position:absolute;top:-11px;left:50%;z-index:8;transform:translateX(-50%);padding:5px 14px;border:1px solid rgba(83,225,238,.58);background:#061219;color:#78ecf4;font:700 10px/1 "Noto Sans TC",sans-serif;letter-spacing:.2em;box-shadow:0 0 18px rgba(55,215,231,.24)}
+body.sandbox-visual-active .board{isolation:isolate;border-color:rgba(83,225,238,.78);box-shadow:0 24px 70px rgba(0,0,0,.72),0 0 0 1px rgba(83,225,238,.35),0 0 34px rgba(38,211,229,.28),inset 0 0 34px rgba(26,173,192,.1);animation:sandboxBoardPulse 2.6s ease-in-out infinite}
+body.sandbox-visual-active .board::after{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;background:linear-gradient(180deg,transparent 0,rgba(80,236,244,.03) 42%,rgba(104,242,249,.32) 50%,rgba(80,236,244,.03) 58%,transparent 100%);background-size:100% 240%;mix-blend-mode:screen;animation:sandboxScan 2.8s linear infinite}
+body.sandbox-visual-active .cell{transition:background .18s ease,box-shadow .18s ease,filter .18s ease}
+body.sandbox-visual-active .cell:hover{background:rgba(51,204,218,.13);box-shadow:inset 0 0 15px rgba(61,222,235,.13)}
+body.sandbox-visual-active .piece{filter:drop-shadow(0 0 4px rgba(78,223,234,.18));transition:transform .18s ease,filter .18s ease}
+body.sandbox-visual-active .piece:hover{filter:brightness(1.08) drop-shadow(0 0 9px rgba(87,229,240,.46))}
+#sandbox-toolbar.sandbox-toolbar-active{border-color:rgba(81,222,235,.55);background:linear-gradient(90deg,rgba(14,65,76,.7),rgba(5,18,24,.9));box-shadow:0 0 22px rgba(40,202,220,.16)}
+#sandbox-toolbar.sandbox-toolbar-active::before{content:"推演中";display:inline-flex;align-items:center;gap:7px;margin-right:8px;color:#79ecf4;font-size:12px;font-weight:800;letter-spacing:.12em}
+#sandbox-toolbar.sandbox-toolbar-active::after{content:"";display:inline-block;width:7px;height:7px;margin-left:7px;border-radius:50%;background:#6df0c9;box-shadow:0 0 10px #55e8c1;animation:sandboxDot 1s ease-in-out infinite alternate}
+.board.sandbox-enter-fx{animation:sandboxEnter .62s cubic-bezier(.22,1,.36,1),sandboxBoardPulse 2.6s .62s ease-in-out infinite}
+.board.sandbox-step-fx::before{content:"";position:absolute;inset:2%;z-index:7;pointer-events:none;border:1px solid rgba(102,237,245,.8);box-shadow:inset 0 0 24px rgba(53,218,232,.2),0 0 18px rgba(53,218,232,.28);animation:sandboxStep .42s ease-out forwards}
+.board.sandbox-exit-fx{animation:sandboxExit .42s ease-out}
+@keyframes sandboxEnter{0%{transform:scale(.975);filter:brightness(.65) saturate(.65)}45%{transform:scale(1.008);filter:brightness(1.25) saturate(1.25)}100%{transform:scale(1);filter:none}}
+@keyframes sandboxExit{0%{filter:brightness(1.2);transform:scale(1.006)}100%{filter:none;transform:scale(1)}}
+@keyframes sandboxStep{0%{opacity:0;transform:scale(.97)}35%{opacity:1}100%{opacity:0;transform:scale(1.01)}}
+@keyframes sandboxScan{0%{background-position:0 -120%}100%{background-position:0 120%}}
+@keyframes sandboxBoardPulse{0%,100%{filter:none}50%{filter:brightness(1.035)}}
+@keyframes sandboxDot{from{opacity:.45;transform:scale(.8)}to{opacity:1;transform:scale(1.15)}}
+@media(max-width:700px){body.sandbox-visual-active .board-area::before{top:-8px;font-size:8px;letter-spacing:.12em;padding:4px 9px}}
+@media(prefers-reduced-motion:reduce){body.sandbox-visual-active .board,.board.sandbox-enter-fx,.board.sandbox-exit-fx,body.sandbox-visual-active .board::after,#sandbox-toolbar.sandbox-toolbar-active::after{animation:none!important}.board.sandbox-step-fx::before{animation-duration:.01ms!important}}
