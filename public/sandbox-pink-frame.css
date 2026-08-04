@@ -1,11 +1,13 @@
-.board-area:has(#sandbox-controls:not(.hidden)) .board {
+.board-area:has(#sandbox-controls:not(.hidden)) .board,
+body.sandbox-exiting .board-area .board {
   outline: 3px solid #ff78bd;
   outline-offset: 8px;
   filter: drop-shadow(0 0 12px rgba(255, 120, 189, 0.65));
   overflow: hidden;
 }
 
-.board-area:has(#sandbox-controls:not(.hidden)) .board::after {
+.board-area:has(#sandbox-controls:not(.hidden)) .board::after,
+body.sandbox-exiting .board-area .board::after {
   content: "";
   position: absolute;
   left: 0;
@@ -27,6 +29,10 @@
   animation: sandboxPinkScan 1.15s cubic-bezier(.22,.7,.2,1) 1 both;
 }
 
+body.sandbox-exiting .board-area .board::after {
+  animation-name: sandboxPinkExitScan;
+}
+
 @keyframes sandboxPinkScan {
   0% {
     top: -18%;
@@ -44,15 +50,34 @@
   }
 }
 
+@keyframes sandboxPinkExitScan {
+  0% {
+    top: 100%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    top: -18%;
+    opacity: 0;
+  }
+}
+
 @media (max-width: 700px) {
-  .board-area:has(#sandbox-controls:not(.hidden)) .board {
+  .board-area:has(#sandbox-controls:not(.hidden)) .board,
+  body.sandbox-exiting .board-area .board {
     outline-width: 2px;
     outline-offset: 5px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .board-area:has(#sandbox-controls:not(.hidden)) .board::after {
+  .board-area:has(#sandbox-controls:not(.hidden)) .board::after,
+  body.sandbox-exiting .board-area .board::after {
     animation: none;
     display: none;
   }
