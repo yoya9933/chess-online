@@ -5,41 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050a0f">
   <title>楚河棋局｜線上象棋與暗棋</title>
-  <meta name="description" content="免註冊，開房即玩。支援中國象棋、揭棋與台灣暗棋。">
+  <meta name="description" content="免註冊，開房即玩。支援標準象棋、揭棋與台灣暗棋。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <style>
-    #mode-home{position:fixed;inset:0;z-index:1000;overflow:auto;background:radial-gradient(circle at 20% 0,#1a2a34 0,#071017 42%,#03070a 100%);color:#f4ead7;font-family:"Noto Sans TC",sans-serif;transition:opacity .45s ease,filter .45s ease,transform .7s cubic-bezier(.22,1,.36,1)}
-    #mode-home.leaving{opacity:.42;filter:blur(7px);transform:scale(.97);pointer-events:none}
-    .mode-home-inner{width:min(1120px,calc(100% - 40px));min-height:100%;margin:auto;padding:26px 0 56px}
-    .mode-home-header{display:flex;justify-content:space-between;align-items:center}.mode-home-brand{font-family:"Noto Serif TC",serif;font-size:28px;font-weight:900;letter-spacing:.08em}.mode-home-brand span{color:#d5ad68}.mode-home-header p,.mode-eyebrow{color:#d5ad68;font-size:12px;font-weight:700;letter-spacing:.2em}
-    .mode-hero{padding:9vh 0 5vh}.mode-hero h1{margin:12px 0 18px;font-family:"Noto Serif TC",serif;font-size:clamp(48px,7vw,86px);line-height:1.05}.mode-hero h1 em{color:#d5ad68;font-style:normal}.mode-lead{max-width:650px;color:#aebbc3;font-size:17px;line-height:1.8}
-    .mode-grid-home{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:48px}.home-mode-card{position:relative;min-height:300px;padding:30px;border:1px solid #30434f;border-radius:22px;background:linear-gradient(145deg,rgba(19,33,42,.96),rgba(7,14,20,.96));color:#f4ead7;text-align:left;box-shadow:0 24px 70px rgba(0,0,0,.3);transition:transform .25s,border-color .25s,box-shadow .25s;cursor:pointer}.home-mode-card:hover{transform:translateY(-5px);border-color:#d5ad68;box-shadow:0 30px 80px rgba(0,0,0,.42)}.home-mode-card.banqi-home{background:linear-gradient(145deg,rgba(55,39,23,.96),rgba(12,15,17,.97))}.home-mode-card small{color:#d5ad68;letter-spacing:.12em}.home-mode-card h2{margin:24px 0 12px;font-family:"Noto Serif TC",serif;font-size:34px}.home-mode-card p{max-width:440px;color:#aebbc3;line-height:1.75}.home-mode-card b{position:absolute;left:30px;bottom:28px;color:#dfbd79}.home-seal{display:grid;place-items:center;width:54px;height:54px;float:right;border:2px solid #a75b43;border-radius:12px;color:#cf7155;font-family:"Noto Serif TC",serif;font-size:27px;font-weight:900;transform:rotate(-4deg)}
-    #page-transition{position:fixed;inset:0;z-index:1100;pointer-events:none;visibility:hidden;display:grid;place-items:center}#page-transition.active{visibility:visible}.transition-curtain{position:absolute;top:0;width:52%;height:100%;background:linear-gradient(180deg,#071017,#020507);transition:transform .68s cubic-bezier(.77,0,.18,1)}.curtain-left{left:0;transform:translateX(-102%);border-right:1px solid rgba(213,173,104,.25)}.curtain-right{right:0;transform:translateX(102%);border-left:1px solid rgba(213,173,104,.25)}#page-transition.active .transition-curtain{transform:translateX(0)}.transition-grid-bg{position:absolute;inset:0;opacity:0;background-image:linear-gradient(rgba(213,173,104,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(213,173,104,.06) 1px,transparent 1px);background-size:34px 34px;transform:scale(1.15);transition:opacity .35s .38s,transform .75s .28s}#page-transition.active .transition-grid-bg{opacity:1;transform:scale(1)}.transition-copy{position:relative;z-index:2;text-align:center;opacity:0;transform:translateY(18px) scale(.92);transition:opacity .35s .48s,transform .6s .42s cubic-bezier(.22,1,.36,1)}#page-transition.active .transition-copy{opacity:1;transform:none}.transition-copy p{margin:0 0 18px;color:#d5ad68;font-size:11px;font-weight:700;letter-spacing:.28em}.transition-copy h2{margin:18px 0 8px;font-family:"Noto Serif TC",serif;font-size:clamp(38px,7vw,70px);letter-spacing:.12em}.transition-copy span{color:#9baab3;letter-spacing:.08em}.transition-seal{display:grid;place-items:center;width:82px;height:82px;margin:auto;border:2px solid #bd694f;border-radius:18px;color:#dc8164;font-family:"Noto Serif TC",serif;font-size:42px;font-weight:900;box-shadow:0 0 45px rgba(189,105,79,.18);animation:sealPulse 1s ease-in-out infinite alternate}@keyframes sealPulse{from{transform:rotate(-5deg) scale(.96)}to{transform:rotate(3deg) scale(1.04)}}
-    body.mode-selecting>main{visibility:hidden}
-    @media(max-width:700px){.mode-home-header p{display:none}.mode-hero{padding-top:7vh}.mode-grid-home{grid-template-columns:1fr}.home-mode-card{min-height:270px}.mode-hero h1{font-size:50px}}
-    @media(prefers-reduced-motion:reduce){#mode-home,#page-transition *{animation:none!important;transition-duration:.01ms!important}}
+    .variant-choice{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .variant-choice label:last-child{border-color:rgba(213,173,104,.45)}
+    #variant-transition{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;background:#050a0f;opacity:0;visibility:hidden;transition:opacity .35s ease}
+    #variant-transition.active{opacity:1;visibility:visible}
+    .variant-transition-content{text-align:center;transform:translateY(14px) scale(.94);opacity:0;transition:.45s .2s cubic-bezier(.22,1,.36,1)}
+    #variant-transition.active .variant-transition-content{transform:none;opacity:1}
+    .variant-transition-seal{display:grid;place-items:center;width:82px;height:82px;margin:auto;border:2px solid #bd694f;border-radius:18px;color:#dc8164;font-family:"Noto Serif TC",serif;font-size:42px;font-weight:900;box-shadow:0 0 45px rgba(189,105,79,.18)}
+    .variant-transition-content p{margin:18px 0 8px;color:#d5ad68;font-size:12px;letter-spacing:.22em}.variant-transition-content h2{margin:0;font-family:"Noto Serif TC",serif;font-size:clamp(34px,7vw,62px)}
+    @media(max-width:700px){.variant-choice{grid-template-columns:1fr}.variant-choice label{min-height:48px}}
+    @media(prefers-reduced-motion:reduce){#variant-transition,.variant-transition-content{transition-duration:.01ms!important}}
   </style>
 </head>
-<body class="mode-selecting">
-  <section id="mode-home" aria-label="選擇遊戲模式">
-    <div class="mode-home-inner">
-      <header class="mode-home-header"><div class="mode-home-brand">楚河<span>棋局</span></div><p>ONLINE CHINESE BOARD GAMES</p></header>
-      <div class="mode-hero">
-        <p class="mode-eyebrow">CHOOSE YOUR GAME</p>
-        <h1>與老友，<br><em>再下一局。</em></h1>
-        <p class="mode-lead">免註冊、開房即玩。選擇標準象棋、揭棋，或台灣暗棋模式。</p>
-        <div class="mode-grid-home">
-          <button class="home-mode-card" type="button" data-mode="xiangqi"><span class="home-seal">弈</span><small>9 × 10 棋盤</small><h2>象棋／揭棋</h2><p>標準象棋、單機對電腦、揭棋、自訂棋局與棋譜回放。</p><b>進入對局 →</b></button>
-          <button class="home-mode-card banqi-home" type="button" data-mode="banqi"><span class="home-seal">暗</span><small>4 × 8 棋盤</small><h2>台灣暗棋</h2><p>32 子隨機覆蓋，首翻決定陣營，支援線上房間與悔棋。</p><b>開始翻棋 →</b></button>
-        </div>
-      </div>
-    </div>
-  </section>
-  <div id="page-transition" aria-hidden="true"><div class="transition-curtain curtain-left"></div><div class="transition-curtain curtain-right"></div><div class="transition-grid-bg"></div><div class="transition-copy"><p id="transition-eyebrow"></p><div id="transition-seal" class="transition-seal"></div><h2 id="transition-title"></h2><span id="transition-subtitle"></span></div></div>
-
+<body>
   <main>
     <header>
       <a class="brand" href="/">楚河<span>棋局</span></a>
@@ -48,28 +32,58 @@
 
     <section id="lobby" class="lobby">
       <div class="intro">
-        <p class="eyebrow">ONLINE XIANGQI</p>
+        <p class="eyebrow">ONLINE CHINESE BOARD GAMES</p>
         <h1>隔著一條楚河，<br><em>與老友再下一局。</em></h1>
-        <p>免註冊、開房即玩。把房間連結傳給朋友，落子之間，重拾面對面對弈的從容。</p>
-        <div class="intro-features" aria-label="平台特色"><span>免註冊</span><span>即時同步</span><span>跨裝置對戰</span></div>
+        <p>免註冊、開房即玩。標準象棋、揭棋與台灣暗棋，都從同一個入口開始。</p>
+        <div class="intro-features" aria-label="平台特色"><span>免註冊</span><span>三種規則</span><span>跨裝置對戰</span></div>
       </div>
       <form id="join-form" class="join-card">
         <p class="seal">弈</p>
         <h2>入局</h2>
-        <fieldset class="mode-choice"><legend>對弈模式</legend><label><input type="radio" name="game-mode" value="online" checked>線上對局</label><label><input type="radio" name="game-mode" value="solo">單機對電腦</label></fieldset>
-        <fieldset class="mode-choice variant-choice"><legend>棋局規則</legend><label><input type="radio" name="game-variant" value="standard" checked>標準象棋</label><label><input type="radio" name="game-variant" value="jieqi">揭棋模式</label></fieldset>
+        <fieldset class="mode-choice">
+          <legend>對弈模式</legend>
+          <label><input type="radio" name="game-mode" value="online" checked>線上對局</label>
+          <label><input type="radio" name="game-mode" value="solo">單機對電腦</label>
+        </fieldset>
+        <fieldset class="mode-choice variant-choice">
+          <legend>棋局規則</legend>
+          <label><input type="radio" name="game-variant" value="standard" checked>標準象棋</label>
+          <label><input type="radio" name="game-variant" value="jieqi">揭棋模式</label>
+          <label><input type="radio" name="game-variant" value="banqi">暗棋模式</label>
+        </fieldset>
         <label>你的稱呼<input id="name" maxlength="16" placeholder="例如：棋痴老王" required></label>
         <label id="room-field">房間代碼<input id="room" maxlength="6" placeholder="留空即可建立新房"></label>
-        <fieldset class="color-choice"><legend>選擇陣營</legend><label><input type="radio" name="preferred-color" value="red" checked><span class="color-disc red">帥</span>紅方</label><label><input type="radio" name="preferred-color" value="black"><span class="color-disc black">將</span>黑方</label></fieldset>
-        <button type="submit">開始對弈 <span>→</span></button><small>建立房間後，分享連結邀請棋友加入</small>
+        <fieldset class="color-choice">
+          <legend>選擇陣營</legend>
+          <label><input type="radio" name="preferred-color" value="red" checked><span class="color-disc red">帥</span>紅方</label>
+          <label><input type="radio" name="preferred-color" value="black"><span class="color-disc black">將</span>黑方</label>
+        </fieldset>
+        <button type="submit">開始對弈 <span>→</span></button>
+        <small>暗棋陣營由第一枚翻開的棋子決定</small>
       </form>
     </section>
 
     <section id="game" class="game hidden">
       <aside class="game-info">
-        <div><p class="eyebrow">PRIVATE MATCH</p><h2 id="game-title">好友對局</h2><p id="room-label" class="room-label"></p>
-          <section class="side-section" aria-label="對局工具"><p class="side-section-title">對局工具</p><div class="side-tool-grid"><button id="copy-link" class="secondary">複製邀請連結</button><button id="sound-toggle" class="secondary" type="button" aria-pressed="true">音效：開</button><button id="setup-enter" class="secondary" type="button">自訂棋局</button></div></section>
-          <div class="side-section in-game-color" aria-label="選擇對局陣營"><p class="side-section-title">我的陣營</p><div class="side-choice-row"><button id="choose-red" class="side-button red" type="button">紅方</button><button id="choose-black" class="side-button black" type="button">黑方</button></div></div>
+        <div>
+          <p class="eyebrow">PRIVATE MATCH</p>
+          <h2 id="game-title">好友對局</h2>
+          <p id="room-label" class="room-label"></p>
+          <section class="side-section" aria-label="對局工具">
+            <p class="side-section-title">對局工具</p>
+            <div class="side-tool-grid">
+              <button id="copy-link" class="secondary">複製邀請連結</button>
+              <button id="sound-toggle" class="secondary" type="button" aria-pressed="true">音效：開</button>
+              <button id="setup-enter" class="secondary" type="button">自訂棋局</button>
+            </div>
+          </section>
+          <div class="side-section in-game-color" aria-label="選擇對局陣營">
+            <p class="side-section-title">我的陣營</p>
+            <div class="side-choice-row">
+              <button id="choose-red" class="side-button red" type="button">紅方</button>
+              <button id="choose-black" class="side-button black" type="button">黑方</button>
+            </div>
+          </div>
         </div>
         <div id="players" class="players"></div>
         <div id="captured-panel" class="captured-panel hidden" aria-live="polite"><p class="side-section-title">吃子紀錄</p><div id="captured-list" class="captured-list"></div><small>明子雙方可見，暗子真身僅吃子方可見</small></div>
@@ -77,24 +91,40 @@
         <div id="replay-panel" class="replay-panel hidden"><p class="eyebrow">GAME RECORD</p><p id="replay-label">棋譜回放</p><div class="replay-buttons"><button id="replay-start" class="secondary" type="button">開始回放</button><button id="replay-prev" class="secondary hidden" type="button">上一步</button><button id="replay-next" class="secondary hidden" type="button">下一步</button><button id="replay-sandbox" class="secondary hidden" type="button">從此步推演</button><button id="replay-exit" class="secondary hidden" type="button">結束回放</button></div><div class="replay-share"><button id="record-copy" class="text-button" type="button">複製棋譜</button><button id="record-share" class="text-button" type="button">分享棋譜</button></div></div>
         <div class="actions"><button id="undo-request" class="text-button">請求悔棋</button><button id="restart" class="text-button">重新開局</button><a href="/" class="text-button">離開棋局</a></div>
       </aside>
-      <div class="board-area"><div id="status" class="status">等待棋友加入…</div><div id="sandbox-toolbar" class="sandbox-toolbar"><button id="sandbox-enter" class="secondary" type="button">沙盤推演</button><div id="sandbox-controls" class="hidden"><button id="sandbox-prev" class="secondary" type="button">上一步</button><button id="sandbox-next" class="secondary" type="button">下一步</button><button id="sandbox-exit" class="secondary" type="button">退出推演</button></div><div id="setup-controls" class="setup-controls hidden"><label>棋子<select id="setup-piece"><option value="red:R">紅俥</option><option value="red:H">紅傌</option><option value="red:E">紅相</option><option value="red:A">紅仕</option><option value="red:K">紅帥</option><option value="red:C">紅炮</option><option value="red:P">紅兵</option><option value="black:R">黑車</option><option value="black:H">黑馬</option><option value="black:E">黑象</option><option value="black:A">黑士</option><option value="black:K">黑將</option><option value="black:C">黑砲</option><option value="black:P">黑卒</option><option value="erase">橡皮擦</option></select></label><label>先行<select id="setup-turn"><option value="red">紅方</option><option value="black">黑方</option></select></label><button id="setup-clear" class="secondary" type="button">清空</button><button id="setup-standard" class="secondary" type="button">標準開局</button><button id="setup-save" class="secondary" type="button">開始對弈</button><button id="setup-cancel" class="secondary" type="button">取消</button></div></div><div id="board" class="board" aria-label="中國象棋棋盤"></div></div>
+      <div class="board-area">
+        <div id="status" class="status">等待棋友加入…</div>
+        <div id="sandbox-toolbar" class="sandbox-toolbar">
+          <button id="sandbox-enter" class="secondary" type="button">沙盤推演</button>
+          <div id="sandbox-controls" class="hidden"><button id="sandbox-prev" class="secondary" type="button">上一步</button><button id="sandbox-next" class="secondary" type="button">下一步</button><button id="sandbox-exit" class="secondary" type="button">退出推演</button></div>
+          <div id="setup-controls" class="setup-controls hidden">
+            <label>棋子<select id="setup-piece"><option value="red:R">紅俥</option><option value="red:H">紅傌</option><option value="red:E">紅相</option><option value="red:A">紅仕</option><option value="red:K">紅帥</option><option value="red:C">紅炮</option><option value="red:P">紅兵</option><option value="black:R">黑車</option><option value="black:H">黑馬</option><option value="black:E">黑象</option><option value="black:A">黑士</option><option value="black:K">黑將</option><option value="black:C">黑砲</option><option value="black:P">黑卒</option><option value="erase">橡皮擦</option></select></label>
+            <label>先行<select id="setup-turn"><option value="red">紅方</option><option value="black">黑方</option></select></label>
+            <button id="setup-clear" class="secondary" type="button">清空</button><button id="setup-standard" class="secondary" type="button">標準開局</button><button id="setup-save" class="secondary" type="button">開始對弈</button><button id="setup-cancel" class="secondary" type="button">取消</button>
+          </div>
+        </div>
+        <div id="board" class="board" aria-label="中國象棋棋盤"></div>
+      </div>
     </section>
   </main>
+
+  <div id="variant-transition" aria-hidden="true"><div class="variant-transition-content"><div class="variant-transition-seal">暗</div><p>ENTERING BANQI</p><h2>翻子定局</h2></div></div>
   <div id="toast" class="toast"></div>
   <script>
-    (()=>{
-      const home=document.getElementById('mode-home'),transition=document.getElementById('page-transition');
-      const modes={xiangqi:{seal:'弈',eyebrow:'ENTERING XIANGQI',title:'楚河漢界',subtitle:'棋盤已備，請入局。'},banqi:{seal:'暗',eyebrow:'ENTERING BANQI',title:'翻子定局',subtitle:'三十二子，勝負未明。'}};
-      document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>{
-        const key=button.dataset.mode,mode=modes[key],reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-        home.classList.add('leaving');transition.classList.add('active');
-        document.getElementById('transition-seal').textContent=mode.seal;document.getElementById('transition-eyebrow').textContent=mode.eyebrow;document.getElementById('transition-title').textContent=mode.title;document.getElementById('transition-subtitle').textContent=mode.subtitle;
-        setTimeout(()=>{
-          if(key==='banqi'){location.href='/banqi.html';return;}
-          home.remove();transition.remove();document.body.classList.remove('mode-selecting');window.scrollTo(0,0);
-        },reduced?80:1150);
-      }));
-    })();
+    document.getElementById("join-form").addEventListener("submit", function(event) {
+      const variant = document.querySelector('input[name="game-variant"]:checked')?.value;
+      if (variant !== "banqi") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const mode = document.querySelector('input[name="game-mode"]:checked')?.value === "solo" ? "local" : "online";
+      const name = document.getElementById("name").value.trim();
+      const room = document.getElementById("room").value.trim().toUpperCase();
+      const params = new URLSearchParams({ mode, name, autostart: "1" });
+      if (room) params.set("room", room);
+      const overlay = document.getElementById("variant-transition");
+      overlay.classList.add("active");
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.setTimeout(() => location.href = `/banqi.html?${params}`, reduced ? 30 : 720);
+    }, true);
   </script>
   <script src="/app.js"></script>
 </body>
