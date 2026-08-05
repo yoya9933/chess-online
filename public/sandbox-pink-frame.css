@@ -32,8 +32,10 @@
 }
 
 .board.sandbox-frame {
-  outline: none;
-  border: 1px solid #c7a46888;
+  outline: 3px solid #ff78bd !important;
+  outline-offset: 8px;
+  border-color: #ff78bd !important;
+  box-shadow: 0 0 18px rgba(255, 120, 189, .65) !important;
   filter: none;
   overflow: visible;
 }
@@ -51,5 +53,10 @@
 
   .sandbox-toolbar button {
     padding: 8px 5px;
+  }
+
+  .board.sandbox-frame {
+    outline-width: 2px !important;
+    outline-offset: 5px;
   }
 }
