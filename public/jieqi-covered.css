@@ -81,17 +81,17 @@
 }
 
 .captured-panel .captured-chip{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:32px!important;
-  height:32px!important;
-  min-width:32px!important;
-  flex:0 0 32px!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  width:24px!important;
+  height:24px!important;
+  min-width:24px!important;
+  flex:0 0 24px!important;
   padding:0!important;
   margin:0!important;
   line-height:1!important;
   vertical-align:middle!important;
+  text-align:center!important;
   animation:none!important;
   transition:none!important;
   transform:none!important;
@@ -101,6 +101,7 @@
 .captured-panel .captured-chip::after{
   animation:none!important;
   transition:none!important;
+  transform:none!important;
 }
 .captured-panel .captured-chip:hover,
 .captured-panel .captured-chip:focus,
@@ -115,42 +116,28 @@
   overflow:hidden;
   border:1px solid #8f7546;
   border-radius:50%;
-  color:transparent!important;
+  color:#d8c08a!important;
   background:linear-gradient(145deg,#1b2324 0%,#0d1517 52%,#05090a 100%);
   box-shadow:
     inset 0 0 0 1px #11191a,
     inset 0 0 0 2px rgba(161,128,66,.48);
-  font-size:0!important;
+  font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif!important;
+  font-size:13px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  letter-spacing:0!important;
+  text-align:center!important;
   text-indent:0!important;
+  text-shadow:none!important;
+  font-synthesis:none;
 }
 .captured-chip.covered-capture::before{
-  content:"暗";
-  position:absolute;
-  inset:0;
-  z-index:2;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:100%;
-  height:100%;
-  padding:0;
-  margin:0;
-  color:#d8c08a;
-  font-family:"Noto Serif TC",serif;
-  font-size:17px;
-  font-weight:900;
-  line-height:1;
-  letter-spacing:0;
-  text-align:center;
-  text-indent:0;
-  text-shadow:0 1px 0 #000;
-  transform:translateY(1px);
-  pointer-events:none;
+  content:none!important;
 }
 .captured-chip.covered-capture::after{
   content:"";
   position:absolute;
-  inset:12%;
+  inset:13%;
   z-index:1;
   border:1px solid rgba(205,173,103,.5);
   border-radius:50%;
@@ -160,13 +147,13 @@
 
 @media(max-width:620px){
   .captured-panel .captured-chip{
-    width:30px!important;
-    height:30px!important;
-    min-width:30px!important;
-    flex-basis:30px!important;
+    width:22px!important;
+    height:22px!important;
+    min-width:22px!important;
+    flex-basis:22px!important;
   }
-  .captured-chip.covered-capture::before{
-    font-size:16px;
+  .captured-chip.covered-capture{
+    font-size:12px!important;
   }
 }
 
