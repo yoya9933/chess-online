@@ -1,59 +1,55 @@
-.board-area:has(#sandbox-controls:not(.hidden)) .board {
-  outline: 3px solid #ff78bd;
-  outline-offset: 8px;
-  filter: drop-shadow(0 0 12px rgba(255, 120, 189, 0.65));
-  overflow: hidden;
+.sandbox-toolbar {
+  width: 100%;
+  min-height: 42px;
+  margin: -5px 0 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.board-area:has(#sandbox-controls:not(.hidden)) .board::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -18%;
-  height: 18%;
-  z-index: 20;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255, 120, 189, 0.16) 28%,
-    rgba(255, 230, 244, 0.96) 50%,
-    rgba(255, 120, 189, 0.38) 62%,
-    transparent 100%
-  );
-  box-shadow: 0 0 22px rgba(255, 120, 189, 0.95);
-  animation: sandboxPinkScan 1.15s cubic-bezier(.22,.7,.2,1) 1 both;
+#sandbox-controls {
+  display: flex;
+  gap: 6px;
 }
 
-@keyframes sandboxPinkScan {
-  0% {
-    top: -18%;
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  82% {
-    opacity: 1;
-  }
-  100% {
-    top: 100%;
-    opacity: 0;
-  }
+.sandbox-toolbar button {
+  padding: 8px 14px;
+  border: 1px solid #ffffff30;
+  background: transparent;
+  color: #eee;
+  font: 12px inherit;
+  cursor: pointer;
 }
 
-@media (max-width: 700px) {
-  .board-area:has(#sandbox-controls:not(.hidden)) .board {
-    outline-width: 2px;
-    outline-offset: 5px;
-  }
+.sandbox-toolbar button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .board-area:has(#sandbox-controls:not(.hidden)) .board::after {
-    animation: none;
-    display: none;
+.sandbox-toolbar #sandbox-exit {
+  border-color: #c8493d88;
+  color: #f09b92;
+}
+
+.board.sandbox-frame {
+  outline: none;
+  border: 1px solid #c7a46888;
+  filter: none;
+  overflow: visible;
+}
+
+.board.sandbox-frame::after {
+  content: none;
+}
+
+@media (max-width: 620px) {
+  #sandbox-controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sandbox-toolbar button {
+    padding: 8px 5px;
   }
 }
