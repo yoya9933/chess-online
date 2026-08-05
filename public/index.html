@@ -21,7 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/jieqi-covered.css">
-  <link rel="stylesheet" href="/sandbox-pink-frame.css?v=20260805-2340">
+  <link rel="stylesheet" href="/sandbox-pink-frame.css?v=20260805-2350">
 </head>
 <body>
   <main>
@@ -101,7 +101,7 @@
           <p class="eyebrow">GAME RECORD</p>
           <p id="replay-label">棋譜回放</p>
           <div class="replay-buttons">
-            <button id="replay-start" class="secondary" type="button">開始回放</button>
+            <button id="replay-start" class="secondary hidden" type="button">開始回放</button>
             <button id="replay-prev" class="secondary hidden" type="button">上一步</button>
             <button id="replay-next" class="secondary hidden" type="button">下一步</button>
             <button id="replay-sandbox" class="secondary hidden" type="button">從此步推演</button>
@@ -145,5 +145,6 @@
   </main>
   <div id="toast" class="toast"></div>
   <script src="/app.js"></script>
+  <script src="/sandbox-gomoku-architecture.js?v=20260805-2350"></script>
 </body>
 </html>
