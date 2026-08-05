@@ -1,0 +1,152 @@
+.game.solo-mode #room-label{
+  color:#63e7f1;
+  letter-spacing:.08em;
+}
+.game.solo-mode .side-tool-grid{
+  grid-template-columns:1fr 1fr;
+}
+.game.solo-mode .side-tool-grid .solo-restart-tool{
+  width:100%;
+  margin:0;
+  padding:9px 8px;
+  text-align:center;
+  font-size:12px;
+}
+.game.solo-mode .side-tool-grid #setup-enter{
+  grid-column:1/-1;
+}
+.in-game-color.side-choice-locked .side-section-title::after{
+  content:" · 已鎖定";
+  color:#786f67;
+}
+.captured-panel{
+  margin:18px 0;
+  padding-top:14px;
+  border-top:1px solid #52d9e429;
+}
+.captured-panel>small{
+  display:block;
+  margin-top:10px;
+  color:#6f9ba2;
+  font-size:10px;
+  line-height:1.55;
+}
+.captured-list{
+  display:grid;
+  gap:13px;
+}
+.captured-group>b{
+  display:block;
+  margin-bottom:8px;
+  color:#b9d4d7;
+  font-size:11px;
+}
+.captured-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  min-height:32px;
+}
+.captured-row em{
+  color:#647c80;
+  font-size:11px;
+  font-style:normal;
+}
+.captured-token{
+  position:relative;
+  display:inline-grid;
+  width:32px;
+  height:32px;
+  place-items:center;
+  flex:0 0 32px;
+}
+.captured-chip{
+  display:grid;
+  width:32px;
+  height:32px;
+  padding:0;
+  place-items:center;
+  border:2px solid currentColor;
+  border-radius:50%;
+  background:#ead7b3;
+  box-shadow:inset 0 0 0 2px #ead7b3,inset 0 0 0 3px currentColor,0 2px 4px #0006;
+  font:900 17px/1 "Noto Serif TC",serif;
+}
+.captured-chip.red{color:#a22620}
+.captured-chip.black{color:#25231f}
+.captured-token.known-hidden .captured-chip{
+  outline:1px solid #9e8147aa;
+  outline-offset:1px;
+}
+.capture-state-badge{
+  position:absolute;
+  z-index:5;
+  top:-5px;
+  right:-6px;
+  display:grid;
+  min-width:20px;
+  height:16px;
+  padding:0 3px;
+  place-items:center;
+  border:1px solid #8d7137;
+  border-radius:9px;
+  background:#071219;
+  color:#e5c777;
+  font:800 9px/1 "Noto Sans TC",sans-serif;
+  font-style:normal;
+}
+.captured-chip.covered-capture{
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  width:32px!important;
+  height:32px!important;
+  padding:0!important;
+  overflow:hidden;
+  place-items:center;
+  border:1px solid #8f7546!important;
+  border-radius:50%;
+  color:transparent!important;
+  background:linear-gradient(145deg,#1b2324,#0d1517 52%,#05090a)!important;
+  box-shadow:inset 0 0 0 2px #11191a,inset 0 0 0 3px #8f754699,0 2px 4px #0007!important;
+  filter:none!important;
+  animation:none!important;
+  font-size:0!important;
+  text-shadow:none!important;
+  transform:none!important;
+}
+.captured-chip.covered-capture::before{
+  content:"暗"!important;
+  position:relative!important;
+  z-index:2!important;
+  display:block!important;
+  inset:auto!important;
+  color:#d8c08a!important;
+  font:900 17px/1 "Noto Serif TC",serif!important;
+  text-shadow:none!important;
+  transform:none!important;
+}
+.captured-chip.covered-capture::after{
+  content:""!important;
+  position:absolute!important;
+  z-index:1!important;
+  inset:13%!important;
+  border:1px solid #cdae6766!important;
+  border-radius:50%!important;
+  box-shadow:inset 0 0 0 1px #161f20!important;
+}
+.captured-chip.covered-capture:hover{
+  border-color:#8f7546!important;
+  box-shadow:inset 0 0 0 2px #11191a,inset 0 0 0 3px #8f754699,0 2px 4px #0007!important;
+  filter:none!important;
+  transform:none!important;
+}
+@media(max-width:620px){
+  .captured-token,.captured-chip,.captured-chip.covered-capture{
+    width:30px!important;
+    height:30px!important;
+  }
+  .captured-token{flex-basis:30px}
+  .captured-chip,.captured-chip.covered-capture::before{font-size:16px!important}
+}
