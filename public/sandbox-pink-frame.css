@@ -32,10 +32,10 @@
 }
 
 .board.sandbox-frame {
-  outline: 3px solid #ff78bd !important;
-  outline-offset: 8px;
+  outline: 1px solid #ff78bd !important;
+  outline-offset: 5px;
   border-color: #ff78bd !important;
-  box-shadow: 0 0 18px rgba(255, 120, 189, .65) !important;
+  box-shadow: 0 0 7px rgba(255, 120, 189, .28) !important;
   filter: none;
   overflow: visible;
 }
@@ -56,7 +56,7 @@
   }
 
   .board.sandbox-frame {
-    outline-width: 2px !important;
-    outline-offset: 5px;
+    outline-width: 1px !important;
+    outline-offset: 4px;
   }
 }
