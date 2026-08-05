@@ -80,59 +80,93 @@
   text-shadow:0 1px 0 #000,0 0 7px rgba(221,190,118,.25);
 }
 
+.captured-panel .captured-chip{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:32px!important;
+  height:32px!important;
+  min-width:32px!important;
+  flex:0 0 32px!important;
+  padding:0!important;
+  margin:0!important;
+  line-height:1!important;
+  vertical-align:middle!important;
+  animation:none!important;
+  transition:none!important;
+  transform:none!important;
+  filter:none!important;
+}
+.captured-panel .captured-chip::before,
+.captured-panel .captured-chip::after{
+  animation:none!important;
+  transition:none!important;
+}
+.captured-panel .captured-chip:hover,
+.captured-panel .captured-chip:focus,
+.captured-panel .captured-chip:active{
+  transform:none!important;
+  filter:none!important;
+}
+
 .captured-chip.covered-capture{
   position:relative;
   isolation:isolate;
-  display:inline-grid;
-  place-items:center;
-  width:46px;
-  height:46px;
-  padding:0;
   overflow:hidden;
-  border:2px solid #8f7546;
+  border:1px solid #8f7546;
   border-radius:50%;
   color:transparent!important;
-  background:
-    radial-gradient(circle at 35% 28%,rgba(255,255,255,.08),transparent 22%),
-    repeating-radial-gradient(circle at center,transparent 0 6px,rgba(187,154,88,.12) 7px 8px,transparent 9px 11px),
-    linear-gradient(145deg,#1b2324 0%,#0d1517 48%,#05090a 100%);
+  background:linear-gradient(145deg,#1b2324 0%,#0d1517 52%,#05090a 100%);
   box-shadow:
-    0 4px 8px rgba(0,0,0,.64),
-    0 0 0 2px #11191a,
-    0 0 0 4px rgba(161,128,66,.58),
-    0 0 10px rgba(92,213,220,.18),
-    inset 0 0 0 2px rgba(224,195,129,.16),
-    inset 0 -7px 11px rgba(0,0,0,.48);
-  font-size:0;
-  vertical-align:middle;
+    inset 0 0 0 1px #11191a,
+    inset 0 0 0 2px rgba(161,128,66,.48);
+  font-size:0!important;
+  text-indent:0!important;
 }
 .captured-chip.covered-capture::before{
   content:"暗";
-  position:relative;
+  position:absolute;
+  inset:0;
   z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  padding:0;
+  margin:0;
   color:#d8c08a;
-  font:900 25px/1 "Noto Serif TC",serif;
-  text-shadow:0 1px 0 #000,0 0 6px rgba(221,190,118,.28);
+  font-family:"Noto Serif TC",serif;
+  font-size:17px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:0;
+  text-align:center;
+  text-indent:0;
+  text-shadow:0 1px 0 #000;
+  transform:translateY(1px);
+  pointer-events:none;
 }
 .captured-chip.covered-capture::after{
   content:"";
   position:absolute;
-  inset:13%;
+  inset:12%;
   z-index:1;
-  border:1px solid rgba(205,173,103,.58);
+  border:1px solid rgba(205,173,103,.5);
   border-radius:50%;
-  box-shadow:
-    inset 0 0 0 2px rgba(22,31,32,.9),
-    0 0 0 1px rgba(232,209,157,.08);
+  box-shadow:inset 0 0 0 1px rgba(22,31,32,.9);
+  pointer-events:none;
 }
 
 @media(max-width:620px){
-  .captured-chip.covered-capture{
-    width:40px;
-    height:40px;
+  .captured-panel .captured-chip{
+    width:30px!important;
+    height:30px!important;
+    min-width:30px!important;
+    flex-basis:30px!important;
   }
   .captured-chip.covered-capture::before{
-    font-size:22px;
+    font-size:16px;
   }
 }
 
