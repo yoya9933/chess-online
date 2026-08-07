@@ -2,6 +2,7 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const STALE_AFTER_MS = 120_000;
+const HEARTBEAT_WRITE_INTERVAL_MS = 30_000;
 const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function initialState(variant = "standard") {
@@ -124,6 +125,24 @@ async function cleanupExpiredRooms(db, now) {
   ).bind(cutoff, cutoff, cutoff).run();
 }
 
+async function refreshHeartbeat(db, room, token, color, now) {
+  if (color !== "red" && color !== "black") return;
+  const seenKey = color === "red" ? "red_seen" : "black_seen";
+  const lastSeen = Number(room[seenKey] || 0);
+  if (now - lastSeen < HEARTBEAT_WRITE_INTERVAL_MS) return;
+
+  const cutoff = now - HEARTBEAT_WRITE_INTERVAL_MS;
+  const result = color === "red"
+    ? await db.prepare(
+      "UPDATE rooms SET red_seen = ? WHERE room_id = ? AND red_token = ? AND (red_seen IS NULL OR red_seen < ?)"
+    ).bind(now, room.room_id, token, cutoff).run()
+    : await db.prepare(
+      "UPDATE rooms SET black_seen = ? WHERE room_id = ? AND black_token = ? AND (black_seen IS NULL OR black_seen < ?)"
+    ).bind(now, room.room_id, token, cutoff).run();
+
+  if (result.meta?.changes) room[seenKey] = now;
+}
+
 export async function GET(request) {
   try {
     const url = new URL(request.url);
@@ -136,13 +155,7 @@ export async function GET(request) {
 
     const now = Date.now();
     const color = playerColor(room, token);
-    if (color === "red") {
-      await db.prepare("UPDATE rooms SET red_seen = ? WHERE room_id = ?").bind(now, roomId).run();
-      room.red_seen = now;
-    } else if (color === "black") {
-      await db.prepare("UPDATE rooms SET black_seen = ? WHERE room_id = ?").bind(now, roomId).run();
-      room.black_seen = now;
-    }
+    await refreshHeartbeat(db, room, token, color, now);
     return json(publicRoom(room, token));
   } catch (error) {
     console.error(error);
