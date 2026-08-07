@@ -2,6 +2,7 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const STALE_AFTER_MS = 120_000;
+const ROOM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function initialState(variant = "standard") {
   const board = Array.from({ length: 10 }, () => Array(9).fill(null));
@@ -116,6 +117,13 @@ async function getRoom(db, roomId) {
   return db.prepare("SELECT * FROM rooms WHERE room_id = ?").bind(roomId).first();
 }
 
+async function cleanupExpiredRooms(db, now) {
+  const cutoff = now - ROOM_TTL_MS;
+  return db.prepare(
+    "DELETE FROM rooms WHERE updated_at < ? AND COALESCE(red_seen, 0) < ? AND COALESCE(black_seen, 0) < ?"
+  ).bind(cutoff, cutoff, cutoff).run();
+}
+
 export async function GET(request) {
   try {
     const url = new URL(request.url);
@@ -152,6 +160,7 @@ export async function POST(request) {
 
     const db = await database();
     const now = Date.now();
+    if (action === "join") await cleanupExpiredRooms(db, now);
     let room = await getRoom(db, roomId);
 
     if (action === "join") {
