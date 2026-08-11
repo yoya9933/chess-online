@@ -74,12 +74,6 @@ Schema 與 migration 位於：
 
 ```text
 db/schema.ts
-drizzzle/   # 若看到此路徑請以 repository 內實際 drizzle/ 為準
-```
-
-實際 migration 目錄為：
-
-```text
 drizzle/
 ├─ 0000_chess_rooms.sql
 └─ 0001_add_undo_request.sql
