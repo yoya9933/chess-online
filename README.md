@@ -6,7 +6,9 @@
 
 ## 線上版本
 
-目前可部署於 Vercel 或 OpenAI Sites 等支援本專案執行環境的平台。
+[開啟「楚河棋局」線上版](https://chuhe-xiangqi-online.bowersbayley13783.chatgpt.site)
+
+本專案也可自行部署至 Vercel 或 OpenAI Sites／Cloudflare runtime。
 
 ## 主要功能
 
@@ -22,6 +24,8 @@
 - 吃子紀錄與揭棋暗子資訊控制
 - 音效與基本移動／將軍效果
 - 斷線後重新同步房間與棋局狀態
+- 玩家在線狀態 heartbeat 與寫入節流
+- 自動清除超過 7 天未更新的房間
 
 ## 技術架構
 
@@ -57,6 +61,8 @@ Next.js / Vinext API
 - 每次房間狀態帶有 `revision`
 - 更新時使用 revision 避免兩台裝置互相覆蓋最新棋局
 - 玩家 token 儲存在瀏覽器 localStorage，用於重新加入原本席位
+- heartbeat 僅在需要時寫入，減少輪詢造成的資料庫更新
+- 玩家加入房間時會順便清除超過 7 天未更新的舊房間
 
 ## 資料庫
 
@@ -81,7 +87,12 @@ drizzle/
 
 ## 本機啟動
 
-需要 Node.js 18 以上。
+需要：
+
+- Node.js 18 以上
+- npm（隨 Node.js 安裝）
+
+安裝依賴並啟動開發伺服器：
 
 ```bash
 npm install
@@ -94,11 +105,18 @@ npm run dev
 http://localhost:3000
 ```
 
-### 使用 Neon Postgres
-
-本機或 Vercel 環境可設定：
+其他可用指令：
 
 ```bash
+npm run build  # 建立正式版
+npm run start  # 啟動已建置的正式版
+```
+
+### 使用 Neon Postgres
+
+在專案根目錄建立 `.env.local`，或在 Vercel 專案設定環境變數：
+
+```dotenv
 DATABASE_URL=postgresql://...
 ```
 
@@ -132,8 +150,10 @@ chess-online/
 │  ├─ style.css
 │  ├─ chess-ui-updates.js
 │  ├─ chess-ui-updates.css
+│  ├─ jieqi-covered.css
+│  ├─ sandbox-pink-frame.css
 │  ├─ sandbox-gomoku-architecture.js
-│  └─ jieqi-covered.css
+│  └─ og.png
 ├─ scripts/
 │  └─ copy-hosting.mjs
 ├─ server.js
@@ -150,6 +170,8 @@ chess-online/
 Repository 內保留 `vercel.json`，目前 function region 設為 `sin1`。
 
 Vercel 部署時建議設定 `DATABASE_URL`，讓 API 使用 Neon Postgres。
+
+一般部署流程：連結此 GitHub repository、設定 `DATABASE_URL`，再使用預設的 `npm run build` 即可。
 
 ### OpenAI Sites / Cloudflare runtime
 
@@ -181,6 +203,12 @@ npm run build
 4. 統一重複的房間／換邊 business logic
 5. 再加入計時器、觀戰、永久棋譜與更完整的 AI
 
-## License
+## 安全性與維護狀態
+
+- 玩家 token 只用來辨識房間席位，不是完整的帳號驗證機制。
+- Server 目前尚未重新驗證所有象棋合法走法，不建議直接用於涉及獎金或競賽裁決的場景。
+- 房間資料屬暫存性質；超過 7 天未更新的房間會在後續玩家加入時清除。
+
+## 授權
 
 目前尚未指定開源授權。
