@@ -10,7 +10,7 @@ let pollTimer = null, stateRevision = 0, lastPlayers = "";
 async function roomRequest(method, payload) {
   const response = await fetch("/api/rooms", {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Player-Token": playerToken },
     body: method === "POST" ? JSON.stringify(payload) : undefined,
     cache: "no-store"
   });
@@ -35,7 +35,7 @@ function applyRemote(data) {
 async function pollRoom() {
   if (!roomId) return;
   try {
-    const response = await fetch(`/api/rooms?room=${encodeURIComponent(roomId)}&token=${encodeURIComponent(playerToken)}`, { cache: "no-store" });
+    const response = await fetch(`/api/rooms?room=${encodeURIComponent(roomId)}`, { headers: { "X-Player-Token": playerToken }, cache: "no-store" });
     const data = await response.json();
     if (response.ok) {
       $("#connection").classList.add("online");
@@ -54,35 +54,36 @@ const socket = {
     try {
       if (event === "join-room") {
         const data = await roomRequest("POST", {
-          action: "join", roomId: payload.roomId, name: payload.name, preferredColor: payload.preferredColor, gameVariant: payload.gameVariant, token: playerToken
+          action: "join", roomId: payload.roomId, name: payload.name, preferredColor: payload.preferredColor, gameVariant: payload.gameVariant
         });
         stateRevision = data.revision;
         lastPlayers = JSON.stringify(data.players || []);
         callback(data);
         clearInterval(pollTimer);
-        pollTimer = setInterval(pollRoom, 1200);
+        pollTimer = setInterval(pollRoom, 2500);
       } else if (event === "move") {
         const data = await roomRequest("POST", {
-          action: "move", roomId, token: playerToken, revision: stateRevision, state: payload.state
+          action: "move", roomId, revision: stateRevision, from: payload.from, to: payload.to,
+          label: payload.state.history?.at(-1)?.label
         });
         stateRevision = data.revision;
         state = data.state;
         undoRequestedBy = null;
         render();renderUndo();
       } else if (event === "request-undo") {
-        const data = await roomRequest("POST", { action: "request-undo", roomId, token: playerToken });
+        const data = await roomRequest("POST", { action: "request-undo", roomId });
         stateRevision = data.revision;
         socketHandlers.moved?.(data);
       } else if (event === "respond-undo") {
-        const data = await roomRequest("POST", { action: "respond-undo", roomId, token: playerToken, accept: payload.accept });
+        const data = await roomRequest("POST", { action: "respond-undo", roomId, accept: payload.accept });
         stateRevision = data.revision;
         socketHandlers.moved?.(data);
       } else if (event === "change-color") {
-        const data = await roomRequest("POST", { action: "change-color", roomId, token: playerToken, color: payload.color });
+        const data = await roomRequest("POST", { action: "change-color", roomId, color: payload.color });
         applyRemote(data);renderPlayers();renderSideChoice();toast(`已切換為${data.color==="red"?"紅方":"黑方"}`);
       } else if (event === "restart") {
         const data = await roomRequest("POST", {
-          action: "restart", roomId, token: playerToken
+          action: "restart", roomId
         });
         stateRevision = data.revision;
         lastMove = null;
@@ -92,7 +93,7 @@ const socket = {
         render();
         renderUndo();
       } else if (event === "custom-setup") {
-        const data = await roomRequest("POST", { action: "custom-setup", roomId, token: playerToken, state: payload.state });
+        const data = await roomRequest("POST", { action: "custom-setup", roomId, state: payload.state });
         stateRevision = data.revision; state = data.state; undoRequestedBy = null; selected = null; lastMove = null; render(); renderUndo();
       }
     } catch (error) {

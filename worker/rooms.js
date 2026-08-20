@@ -1,13 +1,6 @@
-export const runtime = "edge";
-export const dynamic = "force-dynamic";
+import { cloneBoard, hasLegalMove, legalMove } from "./rules.js";
 
 const STALE_AFTER_MS = 120_000;
-const roomsSchema = `CREATE TABLE IF NOT EXISTS rooms (
-  room_id TEXT PRIMARY KEY, state TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0,
-  red_token TEXT, red_name TEXT, red_seen BIGINT, black_token TEXT, black_name TEXT,
-  black_seen BIGINT, previous_state TEXT, undo_requested_by TEXT, updated_at BIGINT NOT NULL
-)`;
-const roomsUpdatedIndex = "CREATE INDEX IF NOT EXISTS rooms_updated_at_idx ON rooms(updated_at)";
 
 function initialState(variant = "standard") {
   const board = Array.from({ length: 10 }, () => Array(9).fill(null));
@@ -64,6 +57,10 @@ function cleanName(value) {
   return String(value || "棋友").trim().slice(0, 16) || "棋友";
 }
 
+function requestToken(request) {
+  return String(request.headers.get("X-Player-Token") || "").slice(0, 80);
+}
+
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -71,36 +68,9 @@ function json(data, status = 200) {
   });
 }
 
-async function database() {
-  if (process.env.DATABASE_URL) {
-    const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL, { fullResults: true });
-    const prepare = (query) => {
-      const statement = {
-        params: [],
-        bind(...params) { this.params = params; return this; },
-        async execute() {
-          let index = 0;
-          const postgresQuery = query.replace(/\?/g, () => `$${++index}`);
-          return sql.query(postgresQuery, this.params);
-        },
-        async first() { const result = await this.execute(); return result.rows?.[0] || null; },
-        async run() { const result = await this.execute(); return { meta: { changes: result.rowCount || 0 } }; },
-      };
-      return statement;
-    };
-    await prepare(roomsSchema).run();
-    await prepare(roomsUpdatedIndex).run();
-    return { prepare };
-  }
-  const cloudflareRuntime = "cloudflare:workers";
-  const { env } = await import(cloudflareRuntime);
-  if (!env.DB) throw new Error("DB binding is unavailable");
-  await env.DB.batch([
-    env.DB.prepare(roomsSchema),
-    env.DB.prepare(roomsUpdatedIndex),
-  ]);
-  return env.DB;
+async function database(runtimeEnv) {
+  if (runtimeEnv?.DB) return runtimeEnv.DB;
+  throw new Error("DB binding is unavailable");
 }
 
 function playerColor(room, token) {
@@ -128,22 +98,22 @@ async function getRoom(db, roomId) {
   return db.prepare("SELECT * FROM rooms WHERE room_id = ?").bind(roomId).first();
 }
 
-export async function GET(request) {
+export async function handleGet(request, runtimeEnv) {
   try {
     const url = new URL(request.url);
     const roomId = cleanRoomId(url.searchParams.get("room"));
-    const token = String(url.searchParams.get("token") || "").slice(0, 80);
-    if (!roomId) return json({ error: "房間代碼無效" }, 400);
-    const db = await database();
+    const token = requestToken(request);
+    if (!roomId || !token) return json({ error: "房間資料無效" }, 400);
+    const db = await database(runtimeEnv);
     const room = await getRoom(db, roomId);
     if (!room) return json({ error: "找不到房間" }, 404);
 
     const now = Date.now();
     const color = playerColor(room, token);
-    if (color === "red") {
+    if (color === "red" && now - Number(room.red_seen || 0) >= 15_000) {
       await db.prepare("UPDATE rooms SET red_seen = ? WHERE room_id = ?").bind(now, roomId).run();
       room.red_seen = now;
-    } else if (color === "black") {
+    } else if (color === "black" && now - Number(room.black_seen || 0) >= 15_000) {
       await db.prepare("UPDATE rooms SET black_seen = ? WHERE room_id = ?").bind(now, roomId).run();
       room.black_seen = now;
     }
@@ -154,15 +124,15 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+export async function handlePost(request, runtimeEnv) {
   try {
     const body = await request.json();
     const action = String(body.action || "");
     const roomId = cleanRoomId(body.roomId);
-    const token = String(body.token || "").slice(0, 80);
+    const token = requestToken(request);
     if (!roomId || !token) return json({ error: "房間資料無效" }, 400);
 
-    const db = await database();
+    const db = await database(runtimeEnv);
     const now = Date.now();
     let room = await getRoom(db, roomId);
 
@@ -172,12 +142,12 @@ export async function POST(request) {
       if (!room) {
         const column = preferredColor === "red" ? "red" : "black";
         await db.prepare(
-          `INSERT INTO rooms
+          `INSERT OR IGNORE INTO rooms
            (room_id, state, revision, ${column}_token, ${column}_name, ${column}_seen, updated_at)
            VALUES (?, ?, 0, ?, ?, ?, ?)`
         ).bind(roomId, JSON.stringify(initialState(gameVariant)), token, cleanName(body.name), now, now).run();
         room = await getRoom(db, roomId);
-        return json(publicRoom(room, token));
+        if (playerColor(room, token) !== "spectator") return json(publicRoom(room, token));
       }
 
       const redStale = room.red_token && now - Number(room.red_seen || 0) > STALE_AFTER_MS;
@@ -189,11 +159,13 @@ export async function POST(request) {
         await db.prepare("UPDATE rooms SET black_name = ?, black_seen = ? WHERE room_id = ?")
           .bind(cleanName(body.name), now, roomId).run();
       } else if (preferredColor === "red" && (!room.red_token || redStale)) {
-        await db.prepare("UPDATE rooms SET red_token = ?, red_name = ?, red_seen = ? WHERE room_id = ?")
-          .bind(token, cleanName(body.name), now, roomId).run();
+        const result = await db.prepare("UPDATE rooms SET red_token = ?, red_name = ?, red_seen = ? WHERE room_id = ? AND (red_token IS NULL OR red_seen < ?)")
+          .bind(token, cleanName(body.name), now, roomId, now - STALE_AFTER_MS).run();
+        if (!result.meta?.changes) return json({ error: "紅方席位剛被加入，請選擇黑方" }, 409);
       } else if (preferredColor === "black" && (!room.black_token || blackStale)) {
-        await db.prepare("UPDATE rooms SET black_token = ?, black_name = ?, black_seen = ? WHERE room_id = ?")
-          .bind(token, cleanName(body.name), now, roomId).run();
+        const result = await db.prepare("UPDATE rooms SET black_token = ?, black_name = ?, black_seen = ? WHERE room_id = ? AND (black_token IS NULL OR black_seen < ?)")
+          .bind(token, cleanName(body.name), now, roomId, now - STALE_AFTER_MS).run();
+        if (!result.meta?.changes) return json({ error: "黑方席位剛被加入，請選擇紅方" }, 409);
       } else {
         return json({ error: preferredColor === "red" ? "紅方席位已有人，請選擇黑方" : "黑方席位已有人，請選擇紅方" }, 409);
       }
@@ -206,29 +178,33 @@ export async function POST(request) {
     if (color === "spectator") return json({ error: "觀戰者不能操作棋局" }, 403);
 
     if (action === "move") {
-      const nextState = body.state;
       const expectedRevision = Number(body.revision);
-      if (!nextState?.board || !["red", "black"].includes(nextState.turn)) {
-        return json({ error: "棋步資料無效" }, 400);
-      }
       const currentState = JSON.parse(room.state);
-      if (currentState.turn !== color || nextState.turn === color) {
+      if (currentState.turn !== color || currentState.winner) {
         return json({ error: "尚未輪到你行棋" }, 409);
       }
-      const from = nextState.lastAction?.from, to = nextState.lastAction?.to;
+      const from = body.from, to = body.to;
       if (![from?.x, from?.y, to?.x, to?.y].every(Number.isInteger)) return json({ error: "棋步位置無效" }, 400);
       const moving = currentState.board?.[from.y]?.[from.x], captured = currentState.board?.[to.y]?.[to.x];
-      if (!moving || moving.c !== color) return json({ error: "棋步棋子無效" }, 400);
-      const authoritativeBoard = clone(currentState.board);
+      const variant = currentState.variant || "standard";
+      if (!legalMove(color, from, to, currentState.board, variant)) return json({ error: "不合法的棋步" }, 400);
+      const authoritativeBoard = cloneBoard(currentState.board);
       authoritativeBoard[to.y][to.x] = { ...moving, h: false };
       authoritativeBoard[from.y][from.x] = null;
-      nextState.board = authoritativeBoard;
-      nextState.variant = currentState.variant || "standard";
-      nextState.captures = clone(currentState.captures || { red: [], black: [] });
+      const nextTurn = color === "red" ? "black" : "red";
+      const nextState = {
+        ...currentState,
+        board: authoritativeBoard,
+        turn: nextTurn,
+        winner: captured?.t === "K" || !hasLegalMove(nextTurn, authoritativeBoard, variant) ? color : null,
+        lastAction: { from, to, capture: Boolean(captured), reveal: Boolean(moving.h) },
+        variant,
+        captures: clone(currentState.captures || { red: [], black: [] }),
+      };
       if (captured) nextState.captures[color].push({ t: captured.t, c: captured.c, hidden: Boolean(captured.h) });
       const oldHistory = Array.isArray(currentState.history) ? clone(currentState.history) : [];
       if (!oldHistory.length) oldHistory.push({ label: "開局", position: positionSnapshot(currentState) });
-      const label = nextState.history?.[nextState.history.length - 1]?.label || "揭子";
+      const label = String(body.label || "行棋").slice(0, 16);
       nextState.history = [...oldHistory, { label, position: positionSnapshot(nextState) }];
       const result = await db.prepare(
         "UPDATE rooms SET previous_state = state, state = ?, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ? AND revision = ?"
@@ -287,12 +263,23 @@ export async function POST(request) {
       ).bind(JSON.stringify(initialState(currentState.variant || "standard")), now, roomId).run();
     } else if (action === "custom-setup") {
       const customState = body.state;
-      if (!customState?.board || customState.board.length !== 10 || !["red", "black"].includes(customState.turn)) {
+      const validBoard = Array.isArray(customState?.board) && customState.board.length === 10 && customState.board.every((row) =>
+        Array.isArray(row) && row.length === 9 && row.every((piece) => piece === null || (
+          ["red", "black"].includes(piece?.c) && ["K", "A", "E", "H", "R", "C", "P"].includes(piece?.t)
+        )),
+      );
+      const kingCount = validBoard ? customState.board.flat().filter((piece) => piece?.t === "K").reduce((counts, piece) => ({ ...counts, [piece.c]: counts[piece.c] + 1 }), { red: 0, black: 0 }) : null;
+      if (!validBoard || kingCount.red !== 1 || kingCount.black !== 1 || !["red", "black"].includes(customState.turn)) {
         return json({ error: "自訂棋局資料無效" }, 400);
       }
+      const safeState = {
+        board: clone(customState.board), turn: customState.turn, winner: null, history: [],
+        lastAction: null, variant: customState.variant === "jieqi" ? "jieqi" : "standard",
+        captures: { red: [], black: [] },
+      };
       await db.prepare(
         "UPDATE rooms SET state = ?, previous_state = NULL, undo_requested_by = NULL, revision = revision + 1, updated_at = ? WHERE room_id = ?"
-      ).bind(JSON.stringify(customState), now, roomId).run();
+      ).bind(JSON.stringify(safeState), now, roomId).run();
     } else {
       return json({ error: "未知操作" }, 400);
     }
@@ -304,3 +291,6 @@ export async function POST(request) {
     return json({ error: "棋局同步暫時失敗" }, 500);
   }
 }
+
+export function GET(request) { return handleGet(request); }
+export function POST(request) { return handlePost(request); }
