@@ -11,7 +11,7 @@
 
     for (const file of [
       'enhancements-runtime.css', 'diagnostics.css', 'responsive.css', 'game-ux.css',
-      'pwa.css', 'record-system.css', 'history.css'
+      'pwa.css', 'record-system.css', 'history.css', 'accessibility.css'
     ]) {
       const stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
@@ -21,7 +21,7 @@
 
     for (const file of [
       'enhancements-runtime.js', 'security-client.js', 'diagnostics-client.js',
-      'pwa-client.js', 'record-system.js', 'history-client.js'
+      'pwa-client.js', 'record-system.js', 'history-client.js', 'accessibility.js'
     ]) {
       const script = document.createElement('script');
       script.src = `/${file}?v=${encodeURIComponent(cacheKey)}`;

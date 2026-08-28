@@ -1,29 +1,32 @@
 # Changelog
 
+## v1.7.0
+
+- 棋盤新增 `grid/gridcell` 語意、row/column index 與完整棋格／棋子 aria-label。
+- 使用方向鍵移動棋盤焦點，Enter／Space 可選子與落子；黑方視角會維持符合畫面的方向操作。
+- 棋盤狀態與 toast 改為 aria-live，玩家區域新增可讀取的在線／暫離狀態。
+- 新增高可見度 focus ring、forced-colors 支援與全域 reduced-motion fallback。
+- 紅黑棋子除顏色外再以實線／雙線外框區分，降低只依靠顏色辨識的需求。
+- Browser E2E 追加 `grid/gridcell/aria-live` 實際 DOM 檢查，另加入 accessibility regression unit tests。
+
 ## v1.6.0
-
-- CI 新增真實 Chrome / Chromium 瀏覽器 smoke test，Cloudflare deploy 前必須通過。
-- Browser E2E 會啟動本機 Wrangler Worker，實際載入桌面 1440×900 與手機 390×844 viewport。
-- 驗證首頁、動態 enhancement loader、PWA manifest 與「最近對局」功能確實在瀏覽器執行後出現在 DOM。
-- 保留並持續執行既有雙玩家 Worker + D1 E2E，涵蓋重連身分、同步、stale revision、揭棋遮罩、悔棋、重新開局與換邊 regression。
-- Browser E2E、多人 API E2E、unit tests、Wrangler build 四層驗證全部通過後才允許 production deploy。
-
+- CI 新增桌面／手機真實 Chrome Browser E2E smoke，與多人 Worker + D1 E2E 一起成為部署門檻。
 ## v1.5.0
-- D1 保存已完成線上對局，玩家可查看最近 20 場並直接 Replay；只保存 Token SHA-256 雜湊。
+- D1 保存已完成線上對局，可查看最近 20 場並 Replay；只保存 Token SHA-256 雜湊。
 ## v1.4.0
-- 新增 `XQPGN/1` 棋譜格式、`.xqg` 下載與 Replay 進度滑桿。
+- `XQPGN/1` 棋譜格式、`.xqg` 下載與 Replay 進度滑桿。
 ## v1.3.0
-- 新增可安裝 PWA、Service Worker、離線首頁與更新提示。
+- PWA、Service Worker、離線首頁與更新提示。
 ## v1.2.0
-- 統一棋局動畫與 reduced motion。
+- 棋局 UX 2.0 與 reduced motion。
 ## v1.1.0
 - Mobile / Responsive 2.0。
 ## v1.0.10
-- Request ID、structured logs、health endpoint 與統一錯誤 UI。
+- 錯誤處理與監控。
 ## v1.0.9
-- API Security Hardening。
+- Security Hardening。
 ## v1.0.8
-- 重連、暫離、過期席位釋放與舊房間 cleanup。
+- 重連與房間生命週期。
 ## v1.0.7
 - 房間 UX。
 ## v1.0.6

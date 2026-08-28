@@ -1,0 +1,61 @@
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.cell[role="gridcell"]:focus { outline: none; }
+.cell[role="gridcell"]:focus-visible {
+  z-index: 9;
+  outline: 3px solid #f0d58f;
+  outline-offset: 3px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 7px rgba(240, 213, 143, .16);
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #f0d58f;
+  outline-offset: 3px;
+}
+
+.presence-badge { display: none !important; }
+.presence-text {
+  margin-left: auto;
+  padding: .12rem .42rem;
+  border: 1px solid rgba(210, 203, 188, .24);
+  border-radius: 999px;
+  font-size: .68rem;
+  letter-spacing: .04em;
+  color: #c9c3b7;
+}
+.presence-text[data-state="offline"] {
+  border-style: dashed;
+  color: #dfbd72;
+}
+
+/* Side identity is not color-only: red pieces use a solid rim, black pieces a double rim. */
+.piece.red { border-style: solid; }
+.piece.black { border-style: double; border-width: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .piece, .cell[role="gridcell"]:focus-visible, button, input, select { forced-color-adjust: auto; }
+  .cell.target::after, .cell.capture::after { border: 2px solid ButtonText; background: transparent; }
+}

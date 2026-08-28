@@ -52,6 +52,9 @@ for page in "$DESKTOP" "$MOBILE"; do
   grep -q '楚河棋局' "$page"
   grep -q 'manifest.webmanifest' "$page"
   grep -q 'id="recent-games"' "$page"
+  grep -q 'role="grid"' "$page"
+  grep -q 'role="gridcell"' "$page"
+  grep -q 'aria-live="polite"' "$page"
 done
 
 printf 'Browser smoke passed with %s at desktop and mobile viewports.\n' "$BROWSER"
