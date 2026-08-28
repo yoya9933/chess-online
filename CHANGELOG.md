@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.4
+
+- 從 `main` 移除已停用的 Next.js / Vercel / Node hosting 實作與舊建置輸出。
+- 移除 `app/`、`api/`、`db/`、`dist/`、舊 hosting script、`next.config.mjs`、`server.js`、`vercel.json`。
+- 正式專案結構只保留 Cloudflare Worker、D1 migrations、Static Assets 與測試。
+- `dist/` 加入 `.gitignore`，避免歷史建置輸出再次被提交。
+
 ## v1.0.3
 
 - 新增暗色科技風、暗金棋子語彙的 SVG favicon。
