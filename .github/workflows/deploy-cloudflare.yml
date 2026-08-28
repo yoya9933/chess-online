@@ -54,6 +54,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate deployment version metadata
+        shell: bash
+        run: |
+          VERSION="$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
+          DEPLOYED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf '{\n  "version": "%s",\n  "commit": "%s",\n  "deployedAt": "%s"\n}\n' "$VERSION" "$GITHUB_SHA" "$DEPLOYED_AT" > public/version.json
+
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v4
         with:
