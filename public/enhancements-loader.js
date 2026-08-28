@@ -9,14 +9,20 @@
       }
     } catch {}
 
-    for (const file of ['enhancements-runtime.css', 'diagnostics.css', 'responsive.css', 'game-ux.css', 'pwa.css', 'record-system.css']) {
+    for (const file of [
+      'enhancements-runtime.css', 'diagnostics.css', 'responsive.css', 'game-ux.css',
+      'pwa.css', 'record-system.css', 'history.css'
+    ]) {
       const stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
       stylesheet.href = `/${file}?v=${encodeURIComponent(cacheKey)}`;
       document.head.appendChild(stylesheet);
     }
 
-    for (const file of ['enhancements-runtime.js', 'security-client.js', 'diagnostics-client.js', 'pwa-client.js', 'record-system.js']) {
+    for (const file of [
+      'enhancements-runtime.js', 'security-client.js', 'diagnostics-client.js',
+      'pwa-client.js', 'record-system.js', 'history-client.js'
+    ]) {
       const script = document.createElement('script');
       script.src = `/${file}?v=${encodeURIComponent(cacheKey)}`;
       script.defer = true;
