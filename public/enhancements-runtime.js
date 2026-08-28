@@ -205,3 +205,117 @@
     });
   }
 })();
+
+(() => {
+  if (typeof applyRemote !== 'function' || typeof renderPlayers !== 'function' || typeof showGame !== 'function') return;
+
+  const SESSION_KEY = 'xiangqi-room-session';
+  let reclaiming = false;
+  let lastReclaimAttempt = 0;
+
+  function saveRoomSession(result) {
+    if (!result?.roomId || !['red', 'black'].includes(result.color)) return;
+    const mine = (result.players || []).find((player) => player.color === result.color);
+    const payload = {
+      roomId: result.roomId,
+      name: mine?.name || document.querySelector('#name')?.value || '棋友',
+      color: result.color,
+      gameVariant: result.state?.variant || 'standard',
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+  }
+
+  function readRoomSession() {
+    try {
+      return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    } catch {
+      return null;
+    }
+  }
+
+  async function reclaimSeat(preferredColor) {
+    if (reclaiming || localMode || !roomId || Date.now() - lastReclaimAttempt < 20_000) return;
+    const session = readRoomSession();
+    if (!session || session.roomId !== roomId) return;
+    reclaiming = true;
+    lastReclaimAttempt = Date.now();
+    const presence = document.querySelector('#room-presence');
+    if (presence) {
+      presence.dataset.state = 'reconnecting';
+      presence.textContent = '正在恢復原本的對局席位…';
+    }
+    try {
+      const data = await roomRequest('POST', {
+        action: 'join',
+        roomId,
+        name: session.name,
+        preferredColor: preferredColor || session.color,
+        gameVariant: session.gameVariant || state.variant || 'standard',
+        token: playerToken,
+      });
+      stateRevision = data.revision;
+      myColor = data.color;
+      players = data.players || [];
+      if (data.state) state = data.state;
+      selected = null;
+      renderPlayers();
+      render();
+      renderUndo();
+      saveRoomSession(data);
+      toast('已恢復對局席位');
+    } catch (error) {
+      toast(error.message || '原席位已被其他棋友加入');
+    } finally {
+      reclaiming = false;
+    }
+  }
+
+  const lifecycleShowGame = showGame;
+  showGame = function lifecycleShowGameWrapper(result) {
+    lifecycleShowGame(result);
+    saveRoomSession(result);
+  };
+
+  const lifecycleRenderPlayers = renderPlayers;
+  renderPlayers = function lifecycleRenderPlayersWrapper() {
+    lifecycleRenderPlayers();
+    const nodes = document.querySelectorAll('#players .player');
+    nodes.forEach((node, index) => {
+      const player = players[index];
+      const offline = player?.online === false;
+      node.classList.toggle('player-offline', offline);
+      let badge = node.querySelector('.presence-badge');
+      if (offline && !badge) {
+        badge = document.createElement('small');
+        badge.className = 'presence-badge';
+        badge.textContent = '暫離';
+        node.appendChild(badge);
+      } else if (!offline && badge) {
+        badge.remove();
+      }
+    });
+
+    const presence = document.querySelector('#room-presence');
+    if (presence && !localMode) {
+      const seated = players.filter((player) => ['red', 'black'].includes(player.color));
+      const offline = seated.find((player) => player.online === false);
+      if (offline) {
+        presence.dataset.state = 'reconnecting';
+        presence.textContent = `${offline.name} 暫時離線，席位會保留一段時間`;
+      }
+    }
+  };
+
+  const lifecycleApplyRemote = applyRemote;
+  applyRemote = function lifecycleApplyRemoteWrapper(data) {
+    const previousColor = myColor;
+    lifecycleApplyRemote(data);
+    if (['red', 'black'].includes(previousColor) && myColor === 'spectator') {
+      reclaimSeat(previousColor);
+    }
+  };
+
+  window.addEventListener('online', () => {
+    if (myColor === 'spectator') reclaimSeat();
+  });
+})();

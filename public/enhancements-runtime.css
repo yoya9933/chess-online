@@ -10,9 +10,20 @@
 .room-presence::before { content: '•'; margin-right: .45rem; }
 .room-presence[data-state="waiting"]::before { color: #d6aa55; }
 .room-presence[data-state="ready"]::before { color: #6b9d69; }
+.room-presence[data-state="reconnecting"]::before { color: #d6aa55; animation: presencePulse 1.4s ease-in-out infinite; }
 .room-label-copyable { cursor: copy; width: fit-content; }
 .room-label-copyable:focus-visible { outline: 2px solid #d8c08a; outline-offset: 4px; border-radius: 4px; }
 .copy-success { border-color: rgba(107, 157, 105, .7) !important; }
 .is-loading { cursor: progress !important; opacity: .7; }
 .network-busy #board { cursor: progress; }
 .network-busy #board .cell { pointer-events: none; }
+.player-offline { opacity: .58; }
+.presence-badge {
+  margin-left: auto;
+  padding: .1rem .4rem;
+  border: 1px solid rgba(214, 170, 85, .35);
+  border-radius: 999px;
+  font-size: .68rem;
+  color: #d6aa55;
+}
+@keyframes presencePulse { 50% { opacity: .35; } }
