@@ -2,9 +2,13 @@
 
 科技風線上中國象棋網站，支援雙人聯機、單機、揭棋、自訂棋局、沙盤推演、棋譜回放、悔棋、音效與走子特效。
 
+**目前版本：v1.0.0** · 版本來源：[`VERSION`](./VERSION) / `package.json`
+
 ## 線上版本
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
+
+網站頁首會顯示 `v版本號 · Git commit`；點擊版本資訊可直接開啟該次部署對應的 GitHub commit。部署時間與完整 commit SHA 由 GitHub Actions 自動寫入 `public/version.json`。
 
 ## 主要功能
 
@@ -47,6 +51,13 @@ Cloudflare D1
 - `drizzle/`：D1 schema migrations。
 - `wrangler.jsonc`：Worker、Static Assets 與 D1 binding 設定。
 - `app/`、`api/`、`vercel.json`：保留舊的 Next/Vercel 實作供歷史參考，不是目前正式 Cloudflare 部署入口。
+
+## 版本資訊
+
+- `VERSION` 與 `package.json` 保存正式語意版本，目前為 `1.0.0`。
+- `public/version.json` 保存網站可讀取的版本 metadata。
+- 每次 `main` 自動部署時，GitHub Actions 會把當下完整 `GITHUB_SHA` 與 UTC 部署時間寫入 `public/version.json`。
+- 網頁頁首顯示短 SHA，方便從正式站直接追到實際部署的 Git commit。
 
 ## Cloudflare 設定
 
@@ -129,10 +140,12 @@ Cloudflare Worker 會重新驗證實際走子，而不是直接信任瀏覽器�
 
 ```text
 chess-online/
+├─ VERSION
 ├─ public/
 │  ├─ index.html
 │  ├─ app.js
 │  ├─ style.css
+│  ├─ version.json
 │  ├─ jieqi-covered.css
 │  ├─ chess-ui-updates.css
 │  ├─ chess-ui-updates.js
