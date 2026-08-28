@@ -17,13 +17,19 @@
       body: method === 'POST' ? JSON.stringify(safePayload) : undefined,
       cache: 'no-store',
     });
+    const requestId = response.headers.get('X-Request-ID') || '';
     let data = null;
     try {
       data = await response.json();
     } catch {
       data = { error: '伺服器回應格式異常' };
     }
-    if (!response.ok) throw new Error(data.error || '連線失敗');
+    if (!response.ok) {
+      const error = new Error(data.error || '連線失敗');
+      error.requestId = data.requestId || requestId;
+      if (typeof window.reportAppError === 'function') window.reportAppError(error);
+      throw error;
+    }
     return data;
   };
 })();

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.10
+
+- 每個 Worker request 都會產生或沿用 `X-Request-ID`，API 錯誤可用短 ID 對照 Cloudflare Workers Logs。
+- Worker 新增 JSON structured request / error logs，不記錄玩家 Token。
+- 新增 `/api/health`，回報 Worker、D1 與部署版本 / commit / deployedAt 診斷資訊。
+- 前端新增統一錯誤提示面板，API 失敗時會顯示可追查的錯誤代碼。
+- 新增 observability 單元測試。
+
 ## v1.0.9
 
 - 新增集中式 Worker security middleware，統一驗證 API room/token/action/content-type/body size。
@@ -32,30 +40,20 @@
 ## v1.0.5
 
 - 新增以 Cloudflare 官方 `createTestHarness()` 執行的 Worker + D1 多人端到端整合測試。
-- CI 會以正式 `wrangler.jsonc` 啟動本機 Worker、套用 D1 migrations，再模擬兩個獨立玩家的核心流程。
-- E2E 驗證建房／加入、Header token 身分恢復、合法走子、跨玩家同步與 stale revision 拒絕。
-- E2E 驗證第一手後換邊鎖定、雙方悔棋、重新開局、開局前交換陣營與揭棋暗子遮罩。
-- Cloudflare deploy 只有在 unit tests、多人 E2E 與 Wrangler build 全部通過後才執行。
+- CI 模擬兩名玩家完成建房、加入、走子、同步、換邊、悔棋、重新開局與揭棋暗子遮罩。
 
 ## v1.0.4
 
-- 從 `main` 移除已停用的 Next.js / Vercel / Node hosting 實作與舊建置輸出。
-- 移除 `app/`、`api/`、`db/`、`dist/`、舊 hosting script、`next.config.mjs`、`server.js`、`vercel.json`。
-- 正式專案結構只保留 Cloudflare Worker、D1 migrations、Static Assets 與測試。
-- `dist/` 加入 `.gitignore`，避免歷史建置輸出再次被提交。
+- 從 `main` 移除停用的 Next.js / Vercel / Node hosting 實作與舊建置輸出，只保留 Cloudflare Worker + D1 正式架構。
 
 ## v1.0.3
 
 - 新增暗色科技風、暗金棋子語彙的 SVG favicon。
-- 瀏覽器分頁現在會顯示「弈」品牌圖示，不再使用通用文件圖示。
 
 ## v1.0.2
 
-- 連線狀態改為實際反映同步結果。
-- 新增「重新連線中」與「連線中斷」狀態。
-- 瀏覽器離線／恢復上線時會即時更新並嘗試重新同步。
+- 連線狀態改為實際反映同步結果，加入重新連線與斷線狀態。
 
 ## v1.0.1
 
-- 玩家席位 Token 不再放入房間輪詢 URL。
-- `/api/rooms` 與 `/api/change-side` 改以 `X-Player-Token` Header 傳送玩家憑證。
+- 玩家席位 Token 不再放入房間輪詢 URL，改以 `X-Player-Token` Header 傳送。

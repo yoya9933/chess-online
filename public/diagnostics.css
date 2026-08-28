@@ -1,0 +1,17 @@
+.app-error-panel {
+  position: fixed;
+  z-index: 1200;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: min(360px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border: 1px solid rgba(213, 119, 99, .55);
+  border-radius: 12px;
+  background: rgba(23, 10, 10, .95);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .38);
+  color: #f1ded8;
+  backdrop-filter: blur(12px);
+}
+.app-error-panel[hidden] { display: none; }
+.app-error-panel b { display: block; font-size: .9rem; line-height: 1.45; }
+.app-error-panel small { display: block; margin-top: 6px; color: #c8a59a; font-family: monospace; }
