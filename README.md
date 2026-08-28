@@ -2,7 +2,7 @@
 
 科技風線上中國象棋網站，支援雙人聯機、單機、揭棋、自訂棋局、沙盤推演、棋譜回放、悔棋、音效與走子特效。
 
-**目前版本：v1.0.0** · 版本來源：[`VERSION`](./VERSION) / `package.json`
+**目前版本：v1.0.1** · 版本來源：[`VERSION`](./VERSION) / `package.json`
 
 ## 線上版本
 
@@ -54,7 +54,7 @@ Cloudflare D1
 
 ## 版本資訊
 
-- `VERSION` 與 `package.json` 保存正式語意版本，目前為 `1.0.0`。
+- `VERSION` 與 `package.json` 保存正式語意版本，目前為 `1.0.1`。
 - `public/version.json` 保存網站可讀取的版本 metadata。
 - 每次 `main` 自動部署時，GitHub Actions 會把當下完整 `GITHUB_SHA` 與 UTC 部署時間寫入 `public/version.json`。
 - 網頁頁首顯示短 SHA，方便從正式站直接追到實際部署的 Git commit。
