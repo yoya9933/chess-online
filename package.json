@@ -2,19 +2,19 @@
   "name": "chess-online",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "vinext dev",
-    "build": "vinext build && node scripts/copy-hosting.mjs",
-    "start": "vinext start"
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run",
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
-    "next": "^15.5.7",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "vinext": "^0.0.20"
+  "dependencies": {},
+  "devDependencies": {
+    "wrangler": "^4.124.0"
   }
 }
