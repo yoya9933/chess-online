@@ -1,6 +1,6 @@
 {
   "name": "chess-online",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,8 @@
     "start": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "node --test",
-    "test:e2e": "node e2e/multiplayer.mjs"
+    "test:e2e": "node e2e/multiplayer.mjs",
+    "test:browser": "bash e2e/browser-smoke.sh"
   },
   "engines": { "node": ">=18" },
   "dependencies": {},
