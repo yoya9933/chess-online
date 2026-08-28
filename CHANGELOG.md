@@ -1,20 +1,24 @@
 # Changelog
 
+## v1.2.0
+
+- 統一上一步起點／終點標記，讓最近一步更容易辨識。
+- 強化可走位置與可吃子提示，並針對觸控裝置放大視覺回饋。
+- 將軍中的將／帥新增一致的警示脈衝效果。
+- 吃子、將軍、勝負與揭棋翻牌動畫統一 easing 與節奏。
+- 完整支援 `prefers-reduced-motion`，需要時停用非必要棋局動畫。
+
 ## v1.1.0
 
-- Mobile / Responsive 2.0：手機棋局改為棋盤優先的單欄布局，棋盤依 viewport 自適應。
-- 主要觸控按鈕與選單提供至少約 44px 的操作高度。
-- 手機底部新增固定對局操作列，支援 safe-area insets。
-- 針對小於 560px 的窄螢幕壓縮 Header、房間資訊與棋子字級。
-- 新增手機橫屏短高度專用雙欄布局，讓棋盤維持在一個 viewport 內。
+- Mobile / Responsive 2.0：手機棋局改為棋盤優先單欄布局，新增底部操作列與橫屏布局。
 
 ## v1.0.10
 
-- 新增 `X-Request-ID`、Worker structured logs、`/api/health`、D1 / deployment diagnostics 與前端統一錯誤提示。
+- 新增 `X-Request-ID`、structured logs、`/api/health`、部署診斷與統一錯誤 UI。
 
 ## v1.0.9
 
-- 新增集中式 API security middleware、Header Token、rate limit、CSP 與常用安全 Headers。
+- 新增 API security middleware、Header Token、rate limit、CSP 與常用安全 Headers。
 
 ## v1.0.8
 

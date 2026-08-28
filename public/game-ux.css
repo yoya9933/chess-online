@@ -1,0 +1,92 @@
+:root {
+  --move-duration: 340ms;
+  --reveal-duration: 520ms;
+  --effect-ease: cubic-bezier(.22,.8,.25,1);
+}
+
+.last-move-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.last-move-marker {
+  position: absolute;
+  left: calc(6% + var(--marker-x) * 11%);
+  top: calc(5.5% + var(--marker-y) * 9.8889%);
+  width: 8.2%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.last-move-marker.from {
+  border: 2px dashed rgba(216, 192, 138, .72);
+  box-shadow: 0 0 0 4px rgba(216, 192, 138, .08);
+}
+.last-move-marker.to {
+  border: 2px solid rgba(224, 193, 115, .95);
+  box-shadow: 0 0 0 5px rgba(224, 193, 115, .12), 0 0 18px rgba(224, 193, 115, .28);
+}
+
+.cell.target::after {
+  width: clamp(9px, 1.7vw, 14px);
+  height: clamp(9px, 1.7vw, 14px);
+  background: rgba(55, 110, 76, .86);
+  box-shadow: 0 0 0 5px rgba(55, 110, 76, .12), 0 0 16px rgba(55, 110, 76, .28);
+  transition: transform 140ms ease, opacity 140ms ease;
+}
+.cell.target:hover::after { transform: scale(1.24); }
+.cell.capture::after {
+  inset: 8%;
+  border: 3px solid rgba(188, 63, 49, .9);
+  box-shadow: inset 0 0 14px rgba(188, 63, 49, .18), 0 0 15px rgba(188, 63, 49, .25);
+  animation: captureTargetPulse 1.25s ease-in-out infinite;
+}
+
+.piece.checked {
+  animation: checkedPulse 1.05s ease-in-out infinite;
+  box-shadow: 0 3px 5px #4d2b18aa, inset 0 0 0 3px #ead7b3, inset 0 0 0 4px currentColor, 0 0 0 5px rgba(191, 61, 45, .2), 0 0 24px rgba(238, 80, 55, .62);
+}
+.piece.moving { animation-duration: var(--move-duration); animation-timing-function: var(--effect-ease); }
+.piece.revealed {
+  transform-style: preserve-3d;
+  animation: piece-move var(--move-duration) var(--effect-ease), polishedReveal var(--reveal-duration) var(--effect-ease) calc(var(--move-duration) * .72);
+}
+
+.capture-fx::before { animation-duration: 560ms; animation-timing-function: var(--effect-ease); }
+.capture-fx::after { animation-duration: 620ms; animation-timing-function: var(--effect-ease); }
+.check-fx, .mate-fx { backdrop-filter: saturate(1.08); }
+#status { transition: color 180ms ease, text-shadow 180ms ease; }
+
+@keyframes checkedPulse {
+  0%, 100% { transform: translateY(0); filter: brightness(1); }
+  50% { transform: translateY(-2px); filter: brightness(1.12); }
+}
+@keyframes captureTargetPulse {
+  0%, 100% { transform: scale(.94); opacity: .78; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+@keyframes polishedReveal {
+  0% { filter: brightness(1.9); transform: rotateY(90deg) scale(.86); opacity: .62; }
+  55% { filter: brightness(1.24); transform: rotateY(-8deg) scale(1.06); opacity: 1; }
+  100% { filter: brightness(1); transform: rotateY(0) scale(1); opacity: 1; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .cell.target::after { box-shadow: 0 0 0 7px rgba(55, 110, 76, .1), 0 0 14px rgba(55, 110, 76, .25); }
+  .cell.capture::after { inset: 3%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piece,
+  .piece.moving,
+  .piece.revealed,
+  .piece.checked,
+  .cell.target::after,
+  .cell.capture::after,
+  .capture-fx::before,
+  .capture-fx::after,
+  .check-fx,
+  .check-fx span,
+  .mate-fx,
+  .mate-fx span {
+    animation: none !important;
+    transition: none !important;
+  }
+}
