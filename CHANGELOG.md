@@ -1,22 +1,18 @@
 # Changelog
 
+## v1.4.0
+
+- 新增楚河棋局自有 `XQPGN/1` 棋譜格式，包含版本、規則、房間、紅黑玩家與結果標頭。
+- 原本複製／分享棋譜會自動使用新版格式。
+- 新增 `.xqg` 棋譜下載功能。
+- Replay 新增進度滑桿，可直接跳到指定手數並持續顯示目前／總手數。
+
 ## v1.3.0
-
-- 新增 Web App Manifest，可將楚河棋局安裝到支援 PWA 的手機／桌面瀏覽器。
-- 使用既有暗金「弈」品牌圖示作為 App icon / maskable icon。
-- 新增 Service Worker 靜態 shell cache；無網路時仍能打開首頁與已快取介面。
-- 線上 API 不做假離線模式，對局仍需網路連線。
-- 偵測新版 Service Worker 後顯示更新提示，可一鍵切換到最新版。
-- 支援瀏覽器 `beforeinstallprompt` 時顯示「安裝應用程式」入口。
-
+- 新增可安裝 PWA、Service Worker、離線首頁與更新提示。
 ## v1.2.0
-
 - 統一上一步、可走位置、將軍、吃子與揭棋翻牌動畫，支援 reduced motion。
-
 ## v1.1.0
-
-- Mobile / Responsive 2.0：棋盤優先布局、底部操作列、44px 觸控區與橫屏布局。
-
+- Mobile / Responsive 2.0：棋盤優先布局、底部操作列、觸控區與橫屏布局。
 ## v1.0.10
 - Request ID、structured logs、health endpoint 與統一錯誤 UI。
 ## v1.0.9

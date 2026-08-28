@@ -1,0 +1,14 @@
+.replay-progress {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 4px;
+  font-size: 11px;
+  color: #9f998f;
+}
+.replay-progress.hidden { display: none; }
+.replay-progress input[type="range"] { width: 100%; accent-color: #d8c08a; }
+.replay-progress output { min-width: 42px; text-align: right; font-family: monospace; color: #cfc5b4; }
+.replay-share { flex-wrap: wrap; }
+#record-download { white-space: nowrap; }

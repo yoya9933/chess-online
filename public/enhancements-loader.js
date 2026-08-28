@@ -9,14 +9,14 @@
       }
     } catch {}
 
-    for (const file of ['enhancements-runtime.css', 'diagnostics.css', 'responsive.css', 'game-ux.css', 'pwa.css']) {
+    for (const file of ['enhancements-runtime.css', 'diagnostics.css', 'responsive.css', 'game-ux.css', 'pwa.css', 'record-system.css']) {
       const stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
       stylesheet.href = `/${file}?v=${encodeURIComponent(cacheKey)}`;
       document.head.appendChild(stylesheet);
     }
 
-    for (const file of ['enhancements-runtime.js', 'security-client.js', 'diagnostics-client.js', 'pwa-client.js']) {
+    for (const file of ['enhancements-runtime.js', 'security-client.js', 'diagnostics-client.js', 'pwa-client.js', 'record-system.js']) {
       const script = document.createElement('script');
       script.src = `/${file}?v=${encodeURIComponent(cacheKey)}`;
       script.defer = true;
