@@ -1,2 +1,18 @@
 #sound-toggle[aria-pressed="false"] { opacity: .68; }
 #sound-toggle[aria-pressed="true"] { box-shadow: inset 0 0 0 1px rgba(216, 192, 138, .18); }
+
+.room-presence {
+  margin: .35rem 0 .85rem;
+  font-size: .86rem;
+  letter-spacing: .04em;
+  opacity: .82;
+}
+.room-presence::before { content: '•'; margin-right: .45rem; }
+.room-presence[data-state="waiting"]::before { color: #d6aa55; }
+.room-presence[data-state="ready"]::before { color: #6b9d69; }
+.room-label-copyable { cursor: copy; width: fit-content; }
+.room-label-copyable:focus-visible { outline: 2px solid #d8c08a; outline-offset: 4px; border-radius: 4px; }
+.copy-success { border-color: rgba(107, 157, 105, .7) !important; }
+.is-loading { cursor: progress !important; opacity: .7; }
+.network-busy #board { cursor: progress; }
+.network-busy #board .cell { pointer-events: none; }
