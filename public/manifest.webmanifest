@@ -1,0 +1,20 @@
+{
+  "name": "楚河棋局｜線上象棋",
+  "short_name": "楚河棋局",
+  "description": "免註冊、開房即玩的中國象棋與揭棋。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050a0f",
+  "theme_color": "#050a0f",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

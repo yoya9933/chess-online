@@ -1,0 +1,31 @@
+.pwa-update {
+  position: fixed;
+  z-index: 1300;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  border: 1px solid rgba(216, 192, 138, .3);
+  border-radius: 999px;
+  background: rgba(5, 10, 15, .96);
+  box-shadow: 0 14px 40px rgba(0,0,0,.42);
+  color: #e7dfd0;
+  backdrop-filter: blur(16px);
+  font-size: 13px;
+}
+.pwa-update[hidden] { display: none; }
+.pwa-update button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #d8c08a;
+  color: #15120d;
+  font-weight: 700;
+}
+#pwa-install { grid-column: 1 / -1; margin: 0; }
+@media (max-width: 900px) {
+  .pwa-update { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 66px); width: calc(100vw - 28px); justify-content: space-between; }
+}
