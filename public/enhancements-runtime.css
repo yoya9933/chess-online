@@ -1,0 +1,2 @@
+#sound-toggle[aria-pressed="false"] { opacity: .68; }
+#sound-toggle[aria-pressed="true"] { box-shadow: inset 0 0 0 1px rgba(216, 192, 138, .18); }

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.6
+
+- 擴充棋局音效為落子、吃子、將軍、勝利與敗北五種可辨識提示。
+- 延用既有音效開關，設定持續儲存在 `localStorage`，重新開啟網站仍會保留偏好。
+- 新增版本化 enhancement loader，後續前端增量功能可依部署 commit 自動 cache-bust 載入。
+
 ## v1.0.5
 
 - 新增以 Cloudflare 官方 `createTestHarness()` 執行的 Worker + D1 多人端到端整合測試。
