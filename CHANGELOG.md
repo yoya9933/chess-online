@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.5
+
+- 新增真正經過本機 Wrangler + D1 HTTP 邊界的多人 E2E 測試。
+- CI 現在會模擬兩個獨立玩家建房、加入、重新讀取房間、落子與跨玩家同步。
+- E2E 驗證 stale revision 會被拒絕、第一手後不能換邊、雙方悔棋、重新開局與開局前交換陣營。
+- E2E 驗證揭棋未揭示棋種在 HTTP 回應中保持遮罩。
+- Cloudflare deploy 只有在 unit tests、多人 E2E 與 Wrangler build 全部通過後才執行。
+
 ## v1.0.4
 
 - 從 `main` 移除已停用的 Next.js / Vercel / Node hosting 實作與舊建置輸出。

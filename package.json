@@ -1,6 +1,6 @@
 {
   "name": "chess-online",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,8 @@
     "build": "wrangler deploy --dry-run",
     "start": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node --test"
+    "test": "node --test",
+    "test:e2e": "node e2e/run.mjs"
   },
   "engines": {
     "node": ">=18"

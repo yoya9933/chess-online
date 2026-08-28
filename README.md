@@ -2,7 +2,7 @@
 
 科技風線上中國象棋網站，支援雙人聯機、單機、揭棋、自訂棋局、沙盤推演、棋譜回放、悔棋、音效與走子特效。
 
-**目前版本：v1.0.4** · 版本來源：[`VERSION`](./VERSION) / `package.json`
+**目前版本：v1.0.5** · 版本來源：[`VERSION`](./VERSION) / `package.json`
 
 ## 線上版本
 
@@ -66,11 +66,15 @@ npm run dev
 
 ```bash
 npm test
+npm run test:e2e
 npm run build
 ```
 
-- `npm test`：執行象棋規則測試。
+- `npm test`：執行象棋規則單元測試。
+- `npm run test:e2e`：套用本機 D1 migrations、啟動 Wrangler，透過 HTTP 模擬兩名玩家完成多人核心流程。
 - `npm run build`：執行 `wrangler deploy --dry-run`，驗證 Worker、Static Assets 與設定。
+
+多人 E2E 覆蓋：建房／加入、Header token 身分恢復、合法走子、跨玩家同步、stale revision、開局後換邊鎖定、雙方悔棋、重新開局、開局前交換陣營，以及揭棋暗子遮罩。
 
 ## 部署
 
@@ -78,7 +82,8 @@ npm run build
 
 ```text
 npm ci
-→ npm test
+→ unit tests
+→ multiplayer E2E (local Wrangler + D1)
 → wrangler deploy --dry-run
 → D1 migrations --remote
 → wrangler deploy
@@ -119,6 +124,9 @@ chess-online/
 │  └─ 0001_add_undo_request.sql
 ├─ test/
 │  └─ rules.test.js
+├─ e2e/
+│  ├─ run.mjs
+│  └─ multiplayer.mjs
 ├─ CHANGELOG.md
 ├─ VERSION
 ├─ wrangler.jsonc
