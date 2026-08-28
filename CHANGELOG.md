@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.9
+
+- 新增集中式 Worker security middleware，統一驗證 API room/token/action/content-type/body size。
+- 玩家 Token 必須透過 `X-Player-Token` Header 傳送，前端 room API 不再依賴 JSON body token。
+- 加入每 Token / API route 的 best-effort rate limit，過量請求回傳 429 與 `Retry-After`。
+- 全站回應加入 CSP、HSTS、`nosniff`、frame protection、Referrer Policy 與 Permissions Policy。
+- 新增安全層單元測試，驗證 Token 格式與主要安全 Headers。
+
 ## v1.0.8
 
 - 玩家席位新增 online / 暫離狀態，短暫斷線時保留原本紅黑方席位。

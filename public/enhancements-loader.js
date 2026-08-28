@@ -14,10 +14,12 @@
     stylesheet.href = `/enhancements-runtime.css?v=${encodeURIComponent(cacheKey)}`;
     document.head.appendChild(stylesheet);
 
-    const script = document.createElement('script');
-    script.src = `/enhancements-runtime.js?v=${encodeURIComponent(cacheKey)}`;
-    script.defer = true;
-    document.body.appendChild(script);
+    for (const file of ['enhancements-runtime.js', 'security-client.js']) {
+      const script = document.createElement('script');
+      script.src = `/${file}?v=${encodeURIComponent(cacheKey)}`;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
   }
 
   loadEnhancements();
