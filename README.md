@@ -2,7 +2,7 @@
 
 科技風線上中國象棋網站，支援雙人聯機、單機、揭棋、自訂棋局、沙盤推演、棋譜回放、悔棋、音效與走子特效。
 
-**目前版本：v1.0.1** · 版本來源：[`VERSION`](./VERSION) / `package.json`
+**目前版本：v1.0.2** · 版本來源：[`VERSION`](./VERSION) / `package.json`
 
 ## 線上版本
 
@@ -54,7 +54,7 @@ Cloudflare D1
 
 ## 版本資訊
 
-- `VERSION` 與 `package.json` 保存正式語意版本，目前為 `1.0.1`。
+- `VERSION` 與 `package.json` 保存正式語意版本，目前為 `1.0.2`。
 - `public/version.json` 保存網站可讀取的版本 metadata。
 - 每次 `main` 自動部署時，GitHub Actions 會把當下完整 `GITHUB_SHA` 與 UTC 部署時間寫入 `public/version.json`。
 - 網頁頁首顯示短 SHA，方便從正式站直接追到實際部署的 Git commit。
@@ -119,7 +119,7 @@ npm run deploy
 ## 房間同步與資料
 
 - 每個房間都有 `revision`，更新採 optimistic concurrency，避免兩台裝置覆蓋彼此狀態。
-- 玩家 token 儲存在瀏覽器 `localStorage`，用於重新辨識原本席位。
+- 玩家 token 儲存在瀏覽器 `localStorage`，用於重新辨識原本席位；API 以 `X-Player-Token` Header 傳送，不放在 URL。
 - heartbeat 寫入有節流，避免輪詢造成大量 D1 writes。
 - 席位長時間未活動後可被新玩家接手。
 - 玩家加入房間時會順便清理超過 7 天未更新的舊房間。
@@ -146,6 +146,7 @@ chess-online/
 │  ├─ app.js
 │  ├─ style.css
 │  ├─ version.json
+│  ├─ connection-status.js
 │  ├─ jieqi-covered.css
 │  ├─ chess-ui-updates.css
 │  ├─ chess-ui-updates.js
