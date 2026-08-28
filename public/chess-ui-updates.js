@@ -187,3 +187,44 @@
   applySoloPanel();
   renderSideChoice();
 })();
+
+(() => {
+  const header = document.querySelector("header");
+  const connection = document.querySelector("#connection");
+  if (!header || !connection) return;
+
+  const versionLink = document.createElement("a");
+  versionLink.id = "app-version";
+  versionLink.href = "https://github.com/yoya9933/chess-online";
+  versionLink.target = "_blank";
+  versionLink.rel = "noreferrer";
+  versionLink.textContent = "v1.0.0";
+  versionLink.setAttribute("aria-label", "查看目前網站版本");
+  Object.assign(versionLink.style, {
+    marginLeft: "auto",
+    marginRight: "18px",
+    color: "#9e9588",
+    textDecoration: "none",
+    fontFamily: "monospace",
+    fontSize: "11px",
+    letterSpacing: ".06em",
+    whiteSpace: "nowrap",
+  });
+  header.insertBefore(versionLink, connection);
+
+  fetch("/version.json", { cache: "no-store" })
+    .then((response) => response.ok ? response.json() : Promise.reject(new Error("version metadata unavailable")))
+    .then((metadata) => {
+      const version = String(metadata.version || "1.0.0");
+      const commit = String(metadata.commit || "");
+      const isCommit = /^[0-9a-f]{7,40}$/i.test(commit);
+      const shortCommit = isCommit ? commit.slice(0, 7) : "";
+      versionLink.textContent = `v${version}${shortCommit ? ` · ${shortCommit}` : ""}`;
+      if (isCommit) versionLink.href = `https://github.com/yoya9933/chess-online/commit/${commit}`;
+      const deployedAt = metadata.deployedAt ? new Date(metadata.deployedAt) : null;
+      versionLink.title = deployedAt && !Number.isNaN(deployedAt.getTime())
+        ? `版本 v${version} · 部署 ${deployedAt.toLocaleString("zh-TW", { hour12: false })}`
+        : `版本 v${version}`;
+    })
+    .catch(() => {});
+})();
