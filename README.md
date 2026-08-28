@@ -71,7 +71,7 @@ npm run build
 ```
 
 - `npm test`：執行象棋規則單元測試。
-- `npm run test:e2e`：套用本機 D1 migrations、啟動 Wrangler，透過 HTTP 模擬兩名玩家完成多人核心流程。
+- `npm run test:e2e`：使用 Cloudflare `createTestHarness()` 載入正式 Wrangler 設定、套用本機 D1 migrations，並模擬兩名玩家完成多人核心流程。
 - `npm run build`：執行 `wrangler deploy --dry-run`，驗證 Worker、Static Assets 與設定。
 
 多人 E2E 覆蓋：建房／加入、Header token 身分恢復、合法走子、跨玩家同步、stale revision、開局後換邊鎖定、雙方悔棋、重新開局、開局前交換陣營，以及揭棋暗子遮罩。
@@ -83,7 +83,7 @@ npm run build
 ```text
 npm ci
 → unit tests
-→ multiplayer E2E (local Wrangler + D1)
+→ multiplayer E2E (Cloudflare test harness + D1)
 → wrangler deploy --dry-run
 → D1 migrations --remote
 → wrangler deploy
@@ -125,7 +125,6 @@ chess-online/
 ├─ test/
 │  └─ rules.test.js
 ├─ e2e/
-│  ├─ run.mjs
 │  └─ multiplayer.mjs
 ├─ CHANGELOG.md
 ├─ VERSION

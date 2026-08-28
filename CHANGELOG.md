@@ -2,10 +2,10 @@
 
 ## v1.0.5
 
-- 新增真正經過本機 Wrangler + D1 HTTP 邊界的多人 E2E 測試。
-- CI 現在會模擬兩個獨立玩家建房、加入、重新讀取房間、落子與跨玩家同步。
-- E2E 驗證 stale revision 會被拒絕、第一手後不能換邊、雙方悔棋、重新開局與開局前交換陣營。
-- E2E 驗證揭棋未揭示棋種在 HTTP 回應中保持遮罩。
+- 新增以 Cloudflare 官方 `createTestHarness()` 執行的 Worker + D1 多人端到端整合測試。
+- CI 會以正式 `wrangler.jsonc` 啟動本機 Worker、套用 D1 migrations，再模擬兩個獨立玩家的核心流程。
+- E2E 驗證建房／加入、Header token 身分恢復、合法走子、跨玩家同步與 stale revision 拒絕。
+- E2E 驗證第一手後換邊鎖定、雙方悔棋、重新開局、開局前交換陣營與揭棋暗子遮罩。
 - Cloudflare deploy 只有在 unit tests、多人 E2E 與 Wrangler build 全部通過後才執行。
 
 ## v1.0.4
