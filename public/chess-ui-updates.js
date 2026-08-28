@@ -138,8 +138,11 @@
     try {
       const response = await fetch("/api/change-side", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, token: playerToken, color }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-Player-Token": playerToken,
+        },
+        body: JSON.stringify({ roomId, color }),
         cache: "no-store",
       });
       const data = await response.json();
@@ -227,4 +230,39 @@
         : `版本 v${version}`;
     })
     .catch(() => {});
+})();
+
+(() => {
+  roomRequest = async function secureRoomRequest(method, payload) {
+    const safePayload = payload ? { ...payload } : {};
+    delete safePayload.token;
+    const response = await fetch("/api/rooms", {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Player-Token": playerToken,
+      },
+      body: method === "POST" ? JSON.stringify(safePayload) : undefined,
+      cache: "no-store",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "連線失敗");
+    return data;
+  };
+
+  pollRoom = async function securePollRoom() {
+    if (!roomId) return;
+    try {
+      const response = await fetch(`/api/rooms?room=${encodeURIComponent(roomId)}`, {
+        headers: { "X-Player-Token": playerToken },
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (response.ok) {
+        $("#connection").classList.add("online");
+        $("#connection").innerHTML = "<i></i> 已連線";
+        applyRemote(data);
+      }
+    } catch {}
+  };
 })();
