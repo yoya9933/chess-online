@@ -9,7 +9,7 @@
       }
     } catch {}
 
-    for (const file of ['enhancements-runtime.css', 'diagnostics.css']) {
+    for (const file of ['enhancements-runtime.css', 'diagnostics.css', 'responsive.css']) {
       const stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
       stylesheet.href = `/${file}?v=${encodeURIComponent(cacheKey)}`;

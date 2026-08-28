@@ -1,0 +1,89 @@
+@media (max-width: 900px) {
+  main { padding: 0 max(14px, env(safe-area-inset-left)) max(18px, env(safe-area-inset-bottom)); }
+  header { height: 72px; gap: 10px; }
+  header .brand { font-size: 20px; flex: 0 1 auto; }
+  #app-version { margin-left: auto !important; margin-right: 4px !important; }
+  .connection { font-size: 11px; white-space: nowrap; }
+
+  .lobby { min-height: calc(100vh - 72px); grid-template-columns: 1fr; gap: 28px; padding: 42px 0 56px; }
+  .intro h1 { font-size: clamp(34px, 10vw, 56px); margin: 14px 0 20px; }
+  .intro > p { line-height: 1.75; }
+  .join-card { width: min(100%, 560px); justify-self: center; padding: 38px 28px 30px; }
+
+  .game { display: flex; flex-direction: column; gap: 18px; padding: 18px 0 92px; }
+  .board-area { order: 1; width: 100%; min-width: 0; }
+  .game-info { order: 2; width: 100%; padding: 0; }
+  .board { width: min(96vw, 630px); max-width: 100%; touch-action: manipulation; }
+  .status { min-height: 24px; margin: 0 0 12px; text-align: center; }
+  .players { margin: 18px 0; }
+  .player { min-height: 48px; align-items: center; }
+  .side-tool-grid .secondary,
+  .side-choice-row .side-button,
+  .secondary { min-height: 44px; }
+  .text-button { min-height: 44px; padding: 10px 8px; display: inline-flex; align-items: center; justify-content: center; }
+  .setup-controls select { min-height: 44px; }
+
+  .actions {
+    position: fixed;
+    z-index: 80;
+    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 7px;
+    border: 1px solid rgba(216, 192, 138, .18);
+    border-radius: 13px;
+    background: rgba(6, 11, 14, .93);
+    box-shadow: 0 14px 42px rgba(0,0,0,.42);
+    backdrop-filter: blur(16px);
+  }
+  .actions .text-button { color: #c9c1b4; text-align: center; font-size: 12px; }
+}
+
+@media (max-width: 560px) {
+  header { height: 62px; }
+  .brand { letter-spacing: .1em; }
+  #app-version { font-size: 9px !important; letter-spacing: 0 !important; }
+  #app-version { max-width: 56px; overflow: hidden; text-overflow: ellipsis; }
+  .connection { max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
+  .connection i { margin-right: 4px; }
+
+  .lobby { padding-top: 28px; }
+  .intro-features { flex-wrap: wrap; }
+  .join-card { padding: 34px 22px 26px; }
+  .join-card h2 { font-size: 29px; }
+  .mode-choice, .color-choice { gap: 6px; }
+  .mode-choice label, .color-choice label { padding: 10px 7px; font-size: 11px; }
+
+  .game { padding-top: 12px; }
+  .game-info h2 { font-size: 26px; }
+  .room-label { font-size: 11px; overflow-wrap: anywhere; }
+  .side-tool-grid { grid-template-columns: 1fr 1fr; }
+  .captured-panel, .undo-panel, .replay-panel { margin: 12px 0; }
+  .board { width: min(calc(100vw - 24px), 560px); }
+  .piece { border-width: 1.5px; font-size: clamp(15px, 5.6vw, 27px); }
+  .cell.target::after { width: 10px; height: 10px; }
+  .sandbox-toolbar { width: 100%; margin-top: 0; }
+  .sandbox-toolbar > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+}
+
+@media (orientation: landscape) and (max-height: 560px) and (min-width: 620px) {
+  main { max-width: none; padding: 0 12px 12px; }
+  header { height: 48px; }
+  .game { display: grid; grid-template-columns: minmax(190px, 28vw) 1fr; gap: 12px; padding: 8px 0 12px; }
+  .game-info { order: 1; max-height: calc(100vh - 60px); overflow: auto; padding: 0 6px 56px 0; }
+  .board-area { order: 2; justify-content: flex-start; }
+  .board { width: min(calc((100vh - 100px) * .9), calc(72vw - 32px)); }
+  .status { margin-bottom: 6px; font-size: 13px; }
+  .players { margin: 10px 0; }
+  .player { padding: 8px 0; min-height: 38px; }
+  .side-section { margin-top: 10px; padding-top: 8px; }
+  .actions { left: 10px; right: auto; width: min(28vw, 250px); bottom: 6px; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  button, a, .room-label-copyable, .cell { -webkit-tap-highlight-color: transparent; }
+  .secondary:active, .text-button:active { transform: scale(.98); }
+}
