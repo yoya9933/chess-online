@@ -8,7 +8,11 @@
   roomRequest = async function securedRoomRequest(method, payload = {}) {
     const safePayload = { ...payload };
     delete safePayload.token;
-    const response = await fetch('/api/rooms', {
+    const requestedRoom = String(safePayload.roomId || roomId || '').toUpperCase();
+    const url = method === 'GET'
+      ? `/api/rooms?room=${encodeURIComponent(requestedRoom)}`
+      : '/api/rooms';
+    const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',

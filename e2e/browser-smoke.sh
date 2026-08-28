@@ -55,6 +55,7 @@ for page in "$DESKTOP" "$MOBILE"; do
   grep -q 'role="grid"' "$page"
   grep -q 'role="gridcell"' "$page"
   grep -q 'aria-live="polite"' "$page"
+  grep -q 'data-performance-layer="adaptive"' "$page"
 done
 
 printf 'Browser smoke passed with %s at desktop and mobile viewports.\n' "$BROWSER"

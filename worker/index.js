@@ -22,6 +22,28 @@ async function roomResponse(request, env, handler) {
   return decorated;
 }
 
+function withStaticCachePolicy(request, response) {
+  if (!response?.ok || request.method !== 'GET') return response;
+  const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/')) return response;
+
+  const headers = new Headers(response.headers);
+  const path = url.pathname;
+  if (path === '/version.json') {
+    headers.set('Cache-Control', 'no-store');
+  } else if (path === '/' || path === '/index.html' || path === '/sw.js' || path === '/manifest.webmanifest') {
+    headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+  } else if (/\.(?:js|css|svg|png|ico|webp|woff2?)$/i.test(path)) {
+    headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 async function route(request, env) {
   const blocked = await securityGate(request);
   if (blocked) return blocked;
@@ -61,6 +83,7 @@ export default {
       });
     }
 
+    response = withStaticCachePolicy(request, response);
     response = secureResponse(response);
     response = attachRequestId(response, context.id);
     logRequest(context, response);

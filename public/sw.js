@@ -1,4 +1,4 @@
-const CACHE = 'chuhe-shell-v1.3.0';
+const CACHE = 'chuhe-shell-v1.8.0';
 const CORE = [
   '/',
   '/index.html',
@@ -19,6 +19,15 @@ const CORE = [
   '/security-client.js',
   '/responsive.css',
   '/game-ux.css',
+  '/pwa.css',
+  '/pwa-client.js',
+  '/record-system.css',
+  '/record-system.js',
+  '/history.css',
+  '/history-client.js',
+  '/accessibility.css',
+  '/accessibility.js',
+  '/performance-client.js',
   '/manifest.webmanifest'
 ];
 
