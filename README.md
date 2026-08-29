@@ -1,25 +1,24 @@
 # 楚河棋局
 
-科技風線上中國象棋平台。**目前版本：v1.13.0**
+科技風線上中國象棋平台。**目前版本：v1.14.0**
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
 
-## 目前功能
+## 核心能力
 
-- 標準象棋／揭棋、伺服器權威棋規、暗子遮罩與棋局裁決
-- Durable Object + WebSocket 即時通知、D1 權威資料與 polling fallback
-- 伺服器棋鐘、觀戰模式與即時觀戰人數
-- 單機 AI 2.0：簡單／普通／困難、Minimax + Alpha-Beta、局面評估
-- 建房、邀請、換邊、重連、悔棋、沙盤、棋譜、歷史對局
-- PWA、Responsive、Accessibility、安全與可觀測性
+- 標準象棋／揭棋、伺服器權威棋規、裁決與棋鐘
+- Durable Object + WebSocket 即時通知，D1 權威狀態與 polling fallback
+- 正式觀戰、單機 AI 2.0（三段難度、Minimax + Alpha-Beta）
+- `XQPGN/2` 棋譜：匯出／匯入 `.xqg`、逐手局面、點選跳手、註記、分析分支
+- 歷史對局、PWA、Responsive、Accessibility、安全與可觀測性
 
-揭棋 AI 對未揭露暗子採中性估值，不直接使用暗子真身做搜尋決策。
+新版 `.xqg` 會保存完整 Replay 局面與註記；舊 `XQPGN/1` 因原格式只有著法文字，系統只辨識而不虛構缺少的局面。
 
 ## 驗證與部署
 
 `npm run check:version → npm test → npm run test:e2e → npm run test:browser → npm run build`
 
-全部通過後才部署 Cloudflare，並自動建立 Git tag 與 GitHub Release。
+全部通過後才部署 Cloudflare，並自動建立同版本 Git tag 與 GitHub Release。
 
 ## 版本紀錄
 
