@@ -1,19 +1,18 @@
 # Changelog
 
-## v1.12.0
-- 新增正式觀戰模式：不佔紅黑席位、唯讀中途加入、專用 `?watch=1` 連結。
-- `/api/watch` 永遠以 spectator 視角輸出，揭棋暗子與私密吃子資訊維持遮罩。
-- Durable Object WebSocket attachment 區分 player / spectator，房間即時顯示觀戰人數。
-- WebSocket presence 更新與 30 秒 spectator polling fallback 並存。
-- 對局工具新增「複製觀戰連結」。
+## v1.13.0
+- 單機 AI 升級為 Minimax + Alpha-Beta 搜尋與局面評估。
+- 新增簡單／普通／困難三段難度並記住偏好。
+- 搜尋包含吃子排序、兵過河加權、將軍狀態與節點預算。
+- 揭棋模擬對尚未翻開棋子只使用中性估值與原位走法，不讀取暗子真身取得不公平優勢。
 
+## v1.12.0
+- 正式 spectator、觀戰連結與即時觀戰人數。
 ## v1.11.0
-- 伺服器權威棋鐘、加秒、自訂時間與逾時判負。
+- 伺服器權威棋鐘。
 ## v1.10.0
-- Durable Object + WebSocket 即時通知與 polling fallback。
+- Durable Object + WebSocket 即時同步。
 ## v1.9.0
 - 完整棋局裁決。
 ## v1.8.1
-- 自動 Git tag / GitHub Release。
-
-更早版本請查閱 GitHub Releases。
+- 自動 GitHub Release。
