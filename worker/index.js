@@ -5,6 +5,9 @@ import { secureResponse, securityGate } from "./security.js";
 import { attachRequestId, healthResponse, logError, logRequest, requestContext } from "./observability.js";
 import { handleHistory, recordCompletedGame } from "./history.js";
 import { afterRoomMutation, handleAdjudication } from "./adjudication.js";
+import { RoomRealtime, handleRealtime, notifyRoom } from './realtime.js';
+
+export { RoomRealtime };
 
 async function freshRoomResponse(request, env, roomId) {
   const url = new URL('/api/rooms', request.url);
@@ -33,6 +36,7 @@ async function roomResponse(request, env, handler) {
       if (data?.roomId && (data?.state?.winner || data?.state?.result?.finished)) {
         await recordCompletedGame(env.DB, data.roomId);
       }
+      if (data?.roomId) await notifyRoom(env, data.roomId, data.revision, 'room-mutation');
     } catch (error) {
       console.error(JSON.stringify({ type: 'post-room-rule-error', message: error instanceof Error ? error.message : String(error) }));
     }
@@ -46,6 +50,7 @@ async function adjudicationResponse(request, env) {
     try {
       const data = await response.clone().json();
       if (data?.finished && data?.roomId) await recordCompletedGame(env.DB, data.roomId);
+      if (data?.roomId) await notifyRoom(env, data.roomId, 0, 'adjudication');
     } catch {}
   }
   return response;
@@ -73,6 +78,10 @@ async function route(request, env) {
 
   const url = new URL(request.url);
   if (url.pathname === '/api/health') return healthResponse(request, env);
+  if (url.pathname === '/api/realtime') {
+    if (request.method === 'GET') return handleRealtime(request, env);
+    return Response.json({ error: '不支援的請求方式' }, { status: 405, headers: { Allow: 'GET' } });
+  }
   if (url.pathname === '/api/history') {
     if (request.method === 'GET') return handleHistory(request, env);
     return Response.json({ error: '不支援的請求方式' }, { status: 405, headers: { Allow: 'GET' } });
@@ -97,13 +106,11 @@ export default {
   async fetch(request, env) {
     const context = requestContext(request);
     let response;
-    try {
-      response = await route(request, env);
-    } catch (error) {
+    try { response = await route(request, env); }
+    catch (error) {
       logError(context, error);
       response = Response.json({ error: '服務暫時無法處理此請求', requestId: context.id }, {
-        status: 500,
-        headers: { 'Cache-Control': 'no-store' },
+        status: 500, headers: { 'Cache-Control': 'no-store' },
       });
     }
     response = withStaticCachePolicy(request, response);
@@ -112,7 +119,5 @@ export default {
     logRequest(context, response);
     return response;
   },
-  async scheduled(_controller, env, ctx) {
-    ctx.waitUntil(cleanupOldRooms(env.DB));
-  },
+  async scheduled(_controller, env, ctx) { ctx.waitUntil(cleanupOldRooms(env.DB)); },
 };

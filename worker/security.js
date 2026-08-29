@@ -12,7 +12,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' ws: wss:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -28,22 +28,16 @@ export function secureResponse(response) {
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 function jsonError(message, status, extraHeaders = {}) {
-  return Response.json({ error: message }, {
-    status,
-    headers: { 'Cache-Control': 'no-store', ...extraHeaders },
-  });
+  return Response.json({ error: message }, { status, headers: { 'Cache-Control': 'no-store', ...extraHeaders } });
 }
 
 function requestLimit(request) {
   const url = new URL(request.url);
+  if (url.pathname === '/api/realtime') return 60;
   if (request.method === 'GET') return url.pathname === '/api/rooms' ? 180 : 120;
   if (url.pathname === '/api/change-side') return 30;
   return 90;
@@ -54,7 +48,6 @@ function checkRateLimit(request, token, now) {
     for (const [key, bucket] of buckets) if (now - bucket.startedAt > API_WINDOW_MS * 2) buckets.delete(key);
     lastSweep = now;
   }
-
   const url = new URL(request.url);
   const identity = token || request.headers.get('CF-Connecting-IP') || 'anonymous';
   const key = `${identity}:${request.method}:${url.pathname}`;
@@ -75,6 +68,12 @@ export async function securityGate(request) {
   if (!url.pathname.startsWith('/api/')) return null;
   if (url.pathname === '/api/health') return checkRateLimit(request, '', Date.now());
 
+  if (url.pathname === '/api/realtime' && request.method === 'GET') {
+    const room = String(url.searchParams.get('room') || '').toUpperCase();
+    if (!ROOM_PATTERN.test(room)) return jsonError('房間代碼無效', 400);
+    return checkRateLimit(request, '', Date.now());
+  }
+
   const token = String(request.headers.get('X-Player-Token') || '');
   if (!TOKEN_PATTERN.test(token)) return jsonError('玩家憑證無效，請重新整理頁面', 401);
 
@@ -94,12 +93,7 @@ export async function securityGate(request) {
   if (length > MAX_API_BODY_BYTES) return jsonError('請求內容過大', 413);
 
   let body;
-  try {
-    body = await request.clone().json();
-  } catch {
-    return jsonError('JSON 格式無效', 400);
-  }
-
+  try { body = await request.clone().json(); } catch { return jsonError('JSON 格式無效', 400); }
   const roomId = String(body?.roomId || '').toUpperCase();
   if (!ROOM_PATTERN.test(roomId)) return jsonError('房間代碼無效', 400);
   if (url.pathname === '/api/rooms' && !ACTIONS.has(String(body?.action || ''))) return jsonError('未知操作', 400);

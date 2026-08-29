@@ -16,6 +16,17 @@
       "migrations_dir": "drizzle"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOM_REALTIME", "class_name": "RoomRealtime" }
+    ]
+  },
+  "exports": {
+    "RoomRealtime": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
   "triggers": {
     "crons": ["17 */6 * * *"]
   },

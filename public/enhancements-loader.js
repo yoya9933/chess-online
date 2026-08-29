@@ -22,7 +22,7 @@
     for (const file of [
       'enhancements-runtime.js', 'security-client.js', 'diagnostics-client.js',
       'pwa-client.js', 'record-system.js', 'history-client.js', 'accessibility.js',
-      'performance-client.js', 'platform-runtime.js'
+      'performance-client.js', 'platform-runtime.js', 'realtime-client.js'
     ]) {
       const script = document.createElement('script');
       script.async = false;
