@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { settleClockValue } from '../worker/clock.js';
+import { settleClockValue, resumeClockAfterUndo } from '../worker/clock.js';
 import { readFileSync } from 'node:fs';
 
 const client = readFileSync(new URL('../public/clock-client.js', import.meta.url), 'utf8');
@@ -17,6 +17,17 @@ test('clock reports server-authoritative timeout', () => {
   const result = settleClockValue(clock, 5000);
   assert.equal(result.clock.blackMs, 0);
   assert.equal(result.timedOut, 'black');
+});
+
+test('undo never refunds clock time and resumes on restored side to move', () => {
+  const clock = { configured:true, started:true, active:'black', runningSince:1000, redMs:52000, blackMs:60000, incrementMs:0 };
+  const settled = settleClockValue(clock, 11000);
+  assert.equal(settled.clock.blackMs, 50000);
+  const resumed = resumeClockAfterUndo(settled.clock, 'red', 11000);
+  assert.equal(resumed.redMs, 52000);
+  assert.equal(resumed.blackMs, 50000);
+  assert.equal(resumed.active, 'red');
+  assert.equal(resumed.runningSince, 11000);
 });
 
 test('clock UI supports presets, increment, custom controls and server sync', () => {

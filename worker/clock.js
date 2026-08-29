@@ -19,6 +19,16 @@ export function settleClockValue(clock, now = Date.now()) {
   return { clock: next, timedOut: remaining <= 0 ? active : null };
 }
 
+export function resumeClockAfterUndo(clock, restoredTurn, now = Date.now()) {
+  if (!clock?.configured) return clock || null;
+  const next = { ...clock };
+  if (next.started && ['red', 'black'].includes(restoredTurn)) {
+    next.active = restoredTurn;
+    next.runningSince = now;
+  }
+  return next;
+}
+
 async function getRoom(db, roomId) {
   return db.prepare('SELECT * FROM rooms WHERE room_id = ?').bind(roomId).first();
 }
@@ -50,18 +60,35 @@ export async function beforeRoomMutationClock(request, env) {
   if (!env?.DB || request.method !== 'POST') return null;
   let body;
   try { body = await request.json(); } catch { return null; }
-  if (body.action !== 'move') return null;
+  const isMove = body.action === 'move';
+  const isUndoAccept = body.action === 'respond-undo' && Boolean(body.accept);
+  if (!isMove && !isUndoAccept) return null;
   const roomId = cleanRoomId(body.roomId);
   const room = await getRoom(env.DB, roomId);
   if (!room) return null;
   const settled = await settleRoomClock(env.DB, room, Date.now(), true);
-  return settled.timedOut ? { timedOut: settled.timedOut, roomId } : null;
+  if (settled.timedOut) return { timedOut: settled.timedOut, roomId };
+  if (isUndoAccept && settled.state?.clock?.configured) {
+    return { timedOut: null, roomId, clock: settled.state.clock };
+  }
+  return null;
 }
 
-export async function afterRoomMutationClock(request, env, responseData) {
+export async function afterRoomMutationClock(request, env, responseData, context = null) {
   if (!env?.DB || request.method !== 'POST' || !responseData?.roomId) return false;
   let body;
   try { body = await request.json(); } catch { return false; }
+
+  if (body.action === 'respond-undo' && Boolean(body.accept) && context?.clock) {
+    const room = await getRoom(env.DB, cleanRoomId(responseData.roomId));
+    if (!room) return false;
+    const state = JSON.parse(room.state);
+    if (state.result?.finished || state.winner) return false;
+    state.clock = resumeClockAfterUndo(context.clock, state.turn, Date.now());
+    const result = await writeState(env.DB, room, state, false);
+    return Boolean(result.meta?.changes);
+  }
+
   if (body.action !== 'move') return false;
   const room = await getRoom(env.DB, cleanRoomId(responseData.roomId));
   if (!room) return false;

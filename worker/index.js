@@ -19,16 +19,17 @@ async function freshRoomResponse(request, env, roomId) {
 }
 async function roomResponse(request, env, handler) {
   const requestCopy=request.clone(), method=request.method;
+  let clockContext=null;
   if(method==='POST'){
-    const timeout=await beforeRoomMutationClock(requestCopy.clone(),env);
-    if(timeout?.roomId){const timed=await freshRoomResponse(requestCopy,env,timeout.roomId);await recordCompletedGame(env.DB,timeout.roomId);await notifyRoom(env,timeout.roomId,0,'timeout');return timed;}
+    clockContext=await beforeRoomMutationClock(requestCopy.clone(),env);
+    if(clockContext?.timedOut&&clockContext?.roomId){const timed=await freshRoomResponse(requestCopy,env,clockContext.roomId);await recordCompletedGame(env.DB,clockContext.roomId);await notifyRoom(env,clockContext.roomId,0,'timeout');return timed;}
   }
   const response=await handler(request,env); let decorated=await decorateRoomResponse(requestCopy.clone(),env,response);
   if(method==='POST'&&decorated.ok){
     try{
       let data=await decorated.clone().json();
       const adjudicationChanged=await afterRoomMutation(requestCopy.clone(),env,data);
-      const clockChanged=await afterRoomMutationClock(requestCopy.clone(),env,data);
+      const clockChanged=await afterRoomMutationClock(requestCopy.clone(),env,data,clockContext);
       if((adjudicationChanged||clockChanged)&&data?.roomId){decorated=await freshRoomResponse(requestCopy,env,data.roomId);data=await decorated.clone().json();}
       if(data?.roomId&&(data?.state?.winner||data?.state?.result?.finished))await recordCompletedGame(env.DB,data.roomId);
       if(data?.roomId)await notifyRoom(env,data.roomId,data.revision,'room-mutation');
