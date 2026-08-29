@@ -1,37 +1,25 @@
 # 楚河棋局
 
-科技風線上中國象棋網站，支援標準象棋、揭棋、雙人房間、單機、即時同步、棋譜、歷史對局、PWA 與無障礙鍵盤操作。
-
-**目前版本：v1.10.0**
+科技風線上中國象棋平台。**目前版本：v1.11.0**
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
 
-## 目前能力
+## 核心能力
 
-- 標準象棋／揭棋，伺服器權威走法驗證與暗子遮罩
-- Cloudflare Durable Object + WebSocket 即時房間更新，D1 為權威狀態，polling 自動 fallback
-- 建房、邀請、換邊、斷線重連、悔棋、重新開局、自訂棋局
-- 認輸、協議和棋、三次重複、長將循環、將死與無合法著法裁決
-- 單機 AI、棋譜、Replay、沙盤、D1 歷史對局
-- PWA、手機／橫屏、ARIA、鍵盤操作、reduced-motion
-- CSP、安全 Headers、rate limit、Request ID、structured logs、health endpoint
+- 標準象棋／揭棋、伺服器權威棋規與暗子遮罩
+- Durable Object + WebSocket 即時通知，D1 權威狀態，polling fallback
+- 10／20／30 分鐘、加秒與自訂棋鐘；伺服器計時、逾時判負、重連不重置
+- 認輸、協議和棋、重複局面與長將循環裁決
+- 建房、邀請、換邊、悔棋、重連、自訂棋局、沙盤與 Replay
+- D1 歷史對局、PWA、Responsive、Accessibility、安全與可觀測性
 
 ## 架構
 
-```text
-Browser / PWA
-  ├─ WebSocket → RoomRealtime Durable Object（即時通知）
-  ├─ HTTP API → Cloudflare Worker（驗證／裁決）
-  └─ Static Assets
-                  |
-                  v
-        Cloudflare D1
-        rooms / game_history / position_log
-```
+`Browser/PWA → WebSocket(Durable Object 即時通知) + HTTP(Worker 權威操作) → D1`
 
-WebSocket 不承載權威棋局狀態，只通知客戶端立即重新同步；因此 WebSocket 斷線或 Worker 部署造成連線重建時，HTTP polling 仍可維持棋局正確性。
+WebSocket 不傳送席位 Token 或揭棋秘密資料；棋鐘與棋局勝負都由 Worker/D1 決定。
 
-## 測試
+## 驗證與部署
 
 ```bash
 npm ci
@@ -42,16 +30,7 @@ npm run test:browser
 npm run build
 ```
 
-Production 只有在 version check、unit、Worker+D1 E2E、Chrome browser E2E 與 Wrangler build 全數成功後才部署；部署成功後自動建立 Git tag 與 GitHub Release。
-
-## 本機開發
-
-```bash
-npx wrangler d1 migrations apply chuhe-xiangqi-db --local
-npm run dev
-```
-
-需要 Node.js 22 以上。
+全部通過後 GitHub Actions 才部署 Cloudflare，並自動建立同版本 Git tag 與 GitHub Release。
 
 ## 版本紀錄
 

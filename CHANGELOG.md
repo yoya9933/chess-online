@@ -1,19 +1,17 @@
 # Changelog
 
+## v1.11.0
+- 新增伺服器權威棋鐘：10／20／30 分鐘、10+5 與自訂分鐘／每步加秒。
+- 棋鐘時間保存在房間 state，斷線、重新整理與 WebSocket 重連都不重置。
+- 每次走子前由 Worker 結算實際耗時；歸零時直接以 `timeout` 結束棋局並寫入歷史。
+- 前端每 250ms 平滑顯示剩餘時間，但勝負仍由伺服器判定。
+- Active WebSocket 下仍定期向 `/api/clock` 校正伺服器時間。
+
 ## v1.10.0
-
-- 多人房間新增 Cloudflare Durable Object + WebSocket Hibernation 即時通知層。
-- D1 繼續作為棋局權威資料來源；所有走子與裁決仍經 Worker + D1 驗證後才廣播更新訊號。
-- WebSocket 只傳送「房間已更新」事件，不傳玩家憑證、暗子真身或完整棋局狀態。
-- WebSocket 中斷會自動重連；原有 HTTP polling 保留為 fallback。
-- WebSocket 正常時背景 polling 降為前景 30 秒／背景 60 秒，降低 D1 與 API 請求量。
-- 新 Durable Object namespace 使用 SQLite storage，符合目前 Cloudflare 新 namespace 要求。
-
+- Durable Object + WebSocket Hibernation 即時通知，D1 權威狀態與 polling fallback。
 ## v1.9.0
-- 認輸、協議和棋、三次重複局面、長將循環與完整結束原因改由伺服器裁決。
+- 認輸、協議和棋、三次重複與長將循環伺服器裁決。
 ## v1.8.1
-- 自動版本一致性檢查、Git tag、GitHub Release 與 release notes。
-## v1.8.0
-- 自適應房間同步、靜態資源 cache policy、效能診斷與 performance budget。
+- 自動版本檢查、Git tag 與 GitHub Release。
 
-更早版本請查閱 Git 歷史與 GitHub Releases。
+更早版本請查閱 GitHub Releases。
