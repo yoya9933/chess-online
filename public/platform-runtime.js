@@ -13,11 +13,20 @@
       checkmate: '將死',
       'king-capture': '將帥被吃',
       'no-legal-move': '無合法著法',
+      timeout: '時間到',
     };
     return labels[result?.type] || '棋局結束';
   }
   function finishedText(result) {
     if (!result?.finished) return '';
+    if (result.type === 'timeout') {
+      if (result.resultText) return result.resultText;
+      const loser = result.loser === 'black' ? 'black' : 'red';
+      const winner = result.winner === 'red' || result.winner === 'black'
+        ? result.winner
+        : (loser === 'red' ? 'black' : 'red');
+      return `${colorName(loser)}超時，${colorName(winner)}勝`;
+    }
     const reason = resultLabel(result);
     return result.winner ? `${colorName(result.winner)}勝出 · ${reason}` : `和棋 · ${reason}`;
   }

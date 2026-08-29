@@ -14,6 +14,20 @@
     if (game?.winner === 'draw') return '1/2-1/2';
     return '*';
   }
+  function resultDescription(game) {
+    if (game?.result?.resultText) return game.result.resultText;
+    if (game?.result?.type === 'timeout') {
+      const loser = game.result.loser === 'black' ? 'black' : 'red';
+      const winner = game.result.winner === 'red' || game.result.winner === 'black'
+        ? game.result.winner
+        : (loser === 'red' ? 'black' : 'red');
+      return `${sideName(loser)}超時，${sideName(winner)}勝`;
+    }
+    if (game?.result?.finished && !game.result.winner) return '和棋';
+    if (game?.winner === 'red') return `${sideName('red')}勝`;
+    if (game?.winner === 'black') return `${sideName('black')}勝`;
+    return '未完局';
+  }
   function parseHeaders(text) {
     const headers = {};
     for (const match of text.matchAll(/^\[([^\s]+)\s+"((?:\\.|[^"])*)"\]$/gm)) {
@@ -32,6 +46,8 @@
         red: sideName('red'),
         black: sideName('black'),
         result: resultCode(game),
+        termination: game?.result?.type || '',
+        resultText: resultDescription(game),
       },
       history: cloneState(game?.history || []),
       finalState: cloneState(game || {}),
@@ -45,6 +61,7 @@
       ['Format', 'XQPGN/2'], ['App', '楚河棋局'], ['Version', version],
       ['Variant', payload.metadata.variant], ['Room', payload.metadata.room],
       ['Red', payload.metadata.red], ['Black', payload.metadata.black], ['Result', payload.metadata.result],
+      ['Termination', payload.metadata.termination], ['ResultText', payload.metadata.resultText],
     ].map(([key, value]) => `[${key} "${headerValue(value)}"]`).join('\n');
     const moves = payload.history.slice(1).map((item, index) => `${index + 1}. ${item.label || '—'}${payload.annotations[index + 1] ? ` {${String(payload.annotations[index + 1]).replace(/[{}\r\n]/g, ' ')}}` : ''}`);
     return `${headers}\n\n${moves.join('\n')}\n\n${payload.metadata.result}\n\n%%XQDATA\n${JSON.stringify(payload)}`;

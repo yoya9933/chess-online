@@ -9,14 +9,14 @@
       }
     } catch {}
 
-    for (const file of ['enhancements-runtime.css','diagnostics.css','responsive.css','game-ux.css','pwa.css','record-system.css','history.css','accessibility.css','platform-runtime.css','analysis.css']) {
+    for (const file of ['enhancements-runtime.css','diagnostics.css','responsive.css','game-ux.css','pwa.css','record-system.css','history.css','accessibility.css','platform-runtime.css','analysis.css','timeout-finish.css']) {
       const stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
       stylesheet.href = `/${file}?v=${encodeURIComponent(cacheKey)}`;
       document.head.appendChild(stylesheet);
     }
 
-    for (const file of ['enhancements-runtime.js','security-client.js','diagnostics-client.js','pwa-client.js','record-system.js','history-client.js','accessibility.js','performance-client.js','platform-runtime.js','realtime-client.js','clock-client.js','spectator-client.js','ai-core.js','ai-client.js','analysis-client.js']) {
+    for (const file of ['enhancements-runtime.js','security-client.js','diagnostics-client.js','pwa-client.js','record-system.js','history-client.js','accessibility.js','performance-client.js','platform-runtime.js','realtime-client.js','clock-client.js','spectator-client.js','ai-core.js','ai-client.js','analysis-client.js','timeout-finish.js']) {
       const script = document.createElement('script');
       script.async = false;
       script.src = `/${file}?v=${encodeURIComponent(cacheKey)}`;

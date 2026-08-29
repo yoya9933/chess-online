@@ -6,7 +6,9 @@
     lastRttMs: null,
     syncing: false,
     settleRequested: false,
+    expiredLocally: false,
   };
+  if (typeof clockRuntime.expiredLocally !== 'boolean') clockRuntime.expiredLocally = false;
 
   function fmt(ms) {
     const safeMs = Math.max(0, Number(ms || 0));
@@ -18,6 +20,15 @@
     const minutes = Math.floor(safe / 60);
     const seconds = safe % 60;
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  function setExpiredLocally(expired, loser = null) {
+    const next = Boolean(expired);
+    if (clockRuntime.expiredLocally === next) return;
+    clockRuntime.expiredLocally = next;
+    window.dispatchEvent(new CustomEvent('chuhe:clock-expired-change', {
+      detail: { expired: next, loser: next ? loser : null },
+    }));
   }
 
   async function clockApi(method = 'GET', payload = {}) {
@@ -44,7 +55,13 @@
         clockRuntime.lastRttMs = Math.max(0, receivedAt - sentAt);
       }
       if (data.clock && state) state.clock = data.clock;
-      if (data.result?.finished) window.xiangqiPerformance?.forceSync?.();
+      if (data.result?.finished && state) {
+        state.result = data.result;
+        state.winner = data.result.winner || 'draw';
+        setExpiredLocally(false);
+        if (typeof render === 'function') render();
+        window.xiangqiPerformance?.forceSync?.();
+      }
       return data;
     } finally { clockRuntime.syncing = false; }
   }
@@ -123,7 +140,10 @@
     if (!panel) return;
     const isOnlinePlayer = !localMode && (myColor === 'red' || myColor === 'black');
     panel.classList.toggle('hidden', !isOnlinePlayer);
-    if (!isOnlinePlayer) return;
+    if (!isOnlinePlayer) {
+      setExpiredLocally(false);
+      return;
+    }
 
     const clock = state?.clock;
     const configured = Boolean(clock?.configured);
@@ -140,6 +160,10 @@
     redNode.classList.toggle('low-time', configured && !finished && clock.active === 'red' && clock.started && red <= 30_000);
     blackNode.classList.toggle('low-time', configured && !finished && clock.active === 'black' && clock.started && black <= 30_000);
 
+    const activeRemaining = configured && clock?.active === 'black' ? black : red;
+    const expired = Boolean(configured && clock?.started && !finished && ['red', 'black'].includes(clock.active) && activeRemaining <= 0);
+    setExpiredLocally(expired, expired ? clock.active : null);
+
     const locked = Boolean(state?.lastAction || (state?.history?.length || 0) > 1);
     panel.querySelector('#clock-config').classList.toggle('hidden', locked);
     const syncText = Number.isFinite(clockRuntime.lastRttMs) ? ` · 同步 ${Math.round(clockRuntime.lastRttMs)}ms` : '';
@@ -147,7 +171,7 @@
       ? `${Math.round(clock.initialMs / 60000)} 分鐘${clock.incrementMs ? ` + ${clock.incrementMs / 1000} 秒` : ''} · ${clock.started ? (finished ? '已結束' : '進行中') : '第一手後啟動'}${syncText}`
       : '未設定棋鐘';
 
-    if (configured && clock.started && !finished && Math.min(red, black) <= 0 && !clockRuntime.settleRequested) {
+    if (expired && !clockRuntime.settleRequested) {
       clockRuntime.settleRequested = true;
       clockApi('GET').catch(() => {}).finally(() => { clockRuntime.settleRequested = false; });
     }
@@ -166,5 +190,6 @@
   });
   clockRuntime.sync = clockApi;
   clockRuntime.format = fmt;
+  clockRuntime.remaining = visibleRemaining;
   paintClock();
 })();

@@ -30,9 +30,22 @@
     button.focus();
   }
 
+  function sideName(color, game) {
+    return color === 'red' ? (game.redName || '紅方') : (game.blackName || '黑方');
+  }
+
   function resultText(game) {
+    if (game.result?.type === 'timeout') {
+      if (game.result.resultText) return game.result.resultText;
+      const loser = game.result.loser === 'black' ? 'black' : 'red';
+      const winner = game.result.winner === 'red' || game.result.winner === 'black'
+        ? game.result.winner
+        : (loser === 'red' ? 'black' : 'red');
+      return `${sideName(loser, game)}超時，${sideName(winner, game)}勝`;
+    }
     if (game.winner === 'red') return `${game.redName} 勝`;
     if (game.winner === 'black') return `${game.blackName} 勝`;
+    if (game.winner === 'draw' || (game.result?.finished && !game.result?.winner)) return '和棋';
     return '未完局';
   }
 
