@@ -29,6 +29,22 @@ export function resumeClockAfterUndo(clock, restoredTurn, now = Date.now()) {
   return next;
 }
 
+export function resetClockForRestart(clock) {
+  if (!clock?.configured) return null;
+  const initialMs = Math.max(60_000, Number(clock.initialMs || 0));
+  const incrementMs = Math.max(0, Number(clock.incrementMs || 0));
+  return {
+    configured: true,
+    initialMs,
+    incrementMs,
+    redMs: initialMs,
+    blackMs: initialMs,
+    started: false,
+    active: 'red',
+    runningSince: null,
+  };
+}
+
 async function getRoom(db, roomId) {
   return db.prepare('SELECT * FROM rooms WHERE room_id = ?').bind(roomId).first();
 }
@@ -62,10 +78,18 @@ export async function beforeRoomMutationClock(request, env) {
   try { body = await request.json(); } catch { return null; }
   const isMove = body.action === 'move';
   const isUndoAccept = body.action === 'respond-undo' && Boolean(body.accept);
-  if (!isMove && !isUndoAccept) return null;
+  const isRestart = body.action === 'restart';
+  if (!isMove && !isUndoAccept && !isRestart) return null;
   const roomId = cleanRoomId(body.roomId);
   const room = await getRoom(env.DB, roomId);
   if (!room) return null;
+
+  if (isRestart) {
+    const state = JSON.parse(room.state);
+    const clock = resetClockForRestart(state.clock);
+    return clock ? { timedOut: null, roomId, clock, restart: true } : null;
+  }
+
   const settled = await settleRoomClock(env.DB, room, Date.now(), true);
   if (settled.timedOut) return { timedOut: settled.timedOut, roomId };
   if (isUndoAccept && settled.state?.clock?.configured) {
@@ -78,6 +102,15 @@ export async function afterRoomMutationClock(request, env, responseData, context
   if (!env?.DB || request.method !== 'POST' || !responseData?.roomId) return false;
   let body;
   try { body = await request.json(); } catch { return false; }
+
+  if (body.action === 'restart' && context?.restart && context?.clock) {
+    const room = await getRoom(env.DB, cleanRoomId(responseData.roomId));
+    if (!room) return false;
+    const state = JSON.parse(room.state);
+    state.clock = context.clock;
+    const result = await writeState(env.DB, room, state, false);
+    return Boolean(result.meta?.changes);
+  }
 
   if (body.action === 'respond-undo' && Boolean(body.accept) && context?.clock) {
     const room = await getRoom(env.DB, cleanRoomId(responseData.roomId));
