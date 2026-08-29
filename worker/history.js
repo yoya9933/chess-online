@@ -20,7 +20,7 @@ export async function recordCompletedGame(db, roomId) {
   } catch {
     return false;
   }
-  if (!state?.winner) return false;
+  if (!state?.winner && !state?.result?.finished) return false;
 
   const revision = Number(room.revision || 0);
   const gameId = `${room.room_id}:${revision}`;
@@ -29,6 +29,7 @@ export async function recordCompletedGame(db, roomId) {
     tokenHash(room.black_token),
   ]);
   const completedAt = Date.now();
+  const storedWinner = state.winner || (state.result?.finished ? 'draw' : null);
 
   const result = await db.prepare(`
     INSERT OR IGNORE INTO game_history (
@@ -44,7 +45,7 @@ export async function recordCompletedGame(db, roomId) {
     room.black_name || '黑方',
     redTokenHash,
     blackTokenHash,
-    state.winner,
+    storedWinner,
     room.state,
     completedAt,
   ).run();
@@ -65,6 +66,7 @@ function publicHistoryRow(row) {
     redName: row.red_name || '紅方',
     blackName: row.black_name || '黑方',
     winner: row.winner || state?.winner || null,
+    result: state?.result || null,
     state,
     completedAt: Number(row.completed_at || 0),
   };

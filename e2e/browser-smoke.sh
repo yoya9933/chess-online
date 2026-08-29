@@ -16,9 +16,7 @@ cleanup() {
 trap cleanup EXIT
 
 for _ in $(seq 1 40); do
-  if curl -fsS "$BASE/" >/dev/null 2>&1; then
-    break
-  fi
+  if curl -fsS "$BASE/" >/dev/null 2>&1; then break; fi
   sleep 0.5
 done
 curl -fsS "$BASE/" >/dev/null
@@ -26,24 +24,11 @@ curl -fsS "$BASE/manifest.webmanifest" | grep -q '楚河棋局'
 
 BROWSER=""
 for candidate in google-chrome google-chrome-stable chromium chromium-browser; do
-  if command -v "$candidate" >/dev/null 2>&1; then
-    BROWSER="$candidate"
-    break
-  fi
+  if command -v "$candidate" >/dev/null 2>&1; then BROWSER="$candidate"; break; fi
 done
-if [ -z "$BROWSER" ]; then
-  echo "No supported Chrome/Chromium binary found" >&2
-  exit 1
-fi
+if [ -z "$BROWSER" ]; then echo "No supported Chrome/Chromium binary found" >&2; exit 1; fi
 
-COMMON_FLAGS=(
-  --headless=new
-  --no-sandbox
-  --disable-gpu
-  --disable-dev-shm-usage
-  --virtual-time-budget=3000
-)
-
+COMMON_FLAGS=(--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3000)
 "$BROWSER" "${COMMON_FLAGS[@]}" --window-size=1440,900 --dump-dom "$BASE/" >"$DESKTOP"
 "$BROWSER" "${COMMON_FLAGS[@]}" --window-size=390,844 --dump-dom "$BASE/" >"$MOBILE"
 
@@ -55,7 +40,8 @@ for page in "$DESKTOP" "$MOBILE"; do
   grep -q 'role="grid"' "$page"
   grep -q 'role="gridcell"' "$page"
   grep -q 'aria-live="polite"' "$page"
-  grep -q 'data-performance-layer="adaptive"' "$page"
+  grep -q 'id="adjudication-panel"' "$page"
+  grep -q 'platform-runtime.js' "$page"
 done
 
 printf 'Browser smoke passed with %s at desktop and mobile viewports.\n' "$BROWSER"

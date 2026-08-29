@@ -2,18 +2,19 @@
 
 科技風線上中國象棋網站，支援標準象棋、揭棋、雙人房間、單機、重連、棋譜、歷史對局、PWA 與無障礙鍵盤操作。
 
-**目前版本：v1.8.1** · 版本來源：[`VERSION`](./VERSION) / `package.json`
+**目前版本：v1.9.0** · 版本來源：[`VERSION`](./VERSION) / `package.json`
 
 ## 線上版本
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
 
-網站頁首會顯示 `v版本號 · Git commit`。每次 `main` 部署時 GitHub Actions 會自動產生 `public/version.json`，記錄版本、完整 Git SHA 與部署時間。Production 部署成功後也會自動建立同版本 Git tag 與 GitHub Release。
+網站頁首會顯示 `v版本號 · Git commit`。每次 `main` 部署時 GitHub Actions 會自動產生 `public/version.json`，Production 部署成功後也會自動建立同版本 Git tag 與 GitHub Release。
 
 ## 主要功能
 
 - 標準中國象棋與揭棋模式，揭棋暗子資訊由伺服器遮罩
 - 建房、邀請連結、紅黑換邊、跨裝置雙人同步與斷線重連
+- 伺服器裁決認輸、協議和棋、三次重複局面、長將循環、將死與無合法著法
 - 單機對電腦、自訂棋局、沙盤推演、悔棋與重新開局
 - 落子／吃子／將軍／勝負音效與棋局動畫
 - `XQPGN/1` 棋譜、`.xqg` 下載、Replay 進度跳轉
@@ -27,15 +28,14 @@
 
 ```text
 Browser / PWA
-  ├─ Cloudflare Static Assets (public/)
-  ├─ /api/rooms
-  ├─ /api/change-side
+  ├─ Cloudflare Static Assets
+  ├─ /api/rooms + /api/adjudication
   ├─ /api/history
   └─ /api/health
           |
           v
 Cloudflare Worker
-  ├─ rules + authoritative move validation
+  ├─ authoritative rules + adjudication
   ├─ room lifecycle + reconnect
   ├─ security + observability
   └─ game history
@@ -43,32 +43,25 @@ Cloudflare Worker
           v
 Cloudflare D1
   ├─ rooms
-  └─ game_history
+  ├─ game_history
+  └─ position_log
 ```
-
-`main` 已移除舊 Next.js / Vercel / Node hosting runtime，正式架構只保留 Cloudflare Worker + D1 + Static Assets。
 
 ## 安全與同步
 
-- 玩家席位 Token 儲存在瀏覽器 `localStorage`，API 透過 `X-Player-Token` Header 傳送，不放在正式網路請求 URL。
+- 玩家席位 Token 只透過 `X-Player-Token` Header 傳送。
 - 房間使用 `revision` 做 optimistic concurrency，伺服器拒絕 stale revision。
-- Worker 重新驗證走法、輪次、棋子所有權、將軍狀態與勝負，不信任前端直接送回的結果。
-- 歷史對局只保存 Token 的 SHA-256 雜湊，不保存可重入席位的原始 Token。
+- Worker 重新驗證走法、輪次、棋子所有權、將軍狀態、勝負與循環裁決。
+- 歷史對局只保存 Token 的 SHA-256 雜湊。
 - API 有輸入驗證、best-effort rate limit、CSP、HSTS、frame protection 與 Request ID。
 
-## 本機開發
+## 本機開發與測試
 
-需要 Node.js 22 以上（Wrangler 目前版本要求）。
+需要 Node.js 22 以上。
 
 ```bash
 npm ci
 npx wrangler d1 migrations apply chuhe-xiangqi-db --local
-npm run dev
-```
-
-## 測試
-
-```bash
 npm run check:version
 npm test
 npm run test:e2e
@@ -76,52 +69,9 @@ npm run test:browser
 npm run build
 ```
 
-- `npm run check:version`：檢查 `VERSION` 與 `package.json` 完全一致。
-- `npm test`：棋規、房間生命週期、安全、監控、歷史、無障礙、效能與 release 流程 regression tests。
-- `npm run test:e2e`：Cloudflare test harness + D1 模擬兩名玩家的核心多人流程。
-- `npm run test:browser`：啟動本機 Wrangler，使用 Chrome / Chromium 驗證桌面與手機真實頁面。
-- `npm run build`：`wrangler deploy --dry-run`。
-
 ## 部署
 
-`main` push 後自動執行：
-
-```text
-npm ci
-→ version metadata check
-→ unit tests
-→ multiplayer E2E
-→ browser E2E
-→ wrangler deploy --dry-run
-→ D1 migrations --remote
-→ Cloudflare Worker deploy
-→ Git tag + GitHub Release
-```
-
-正式 Cloudflare 設定：
-
-- Worker：`chuhe-xiangqi-online`
-- Static Assets：`./public`
-- D1 binding：`DB`
-- D1 database：`chuhe-xiangqi-db`
-- Cron：定期清除長期未使用房間
-
-## 專案結構
-
-```text
-chess-online/
-├─ .github/workflows/        # CI / production deploy / release
-├─ public/                   # UI、PWA、responsive、accessibility、performance
-├─ worker/                   # rooms、rules、security、lifecycle、history、observability
-├─ drizzle/                  # D1 migrations
-├─ test/                     # unit / regression tests
-├─ e2e/                      # Worker+D1 E2E / browser smoke
-├─ scripts/                  # release/version checks
-├─ CHANGELOG.md
-├─ VERSION
-├─ wrangler.jsonc
-└─ package.json
-```
+`main` push 後自動執行：version check → unit tests → multiplayer E2E → browser E2E → Wrangler dry-run → D1 migrations → Cloudflare deploy → Git tag + GitHub Release。
 
 ## 版本紀錄
 

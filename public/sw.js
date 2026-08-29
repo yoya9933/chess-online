@@ -1,34 +1,14 @@
-const CACHE = 'chuhe-shell-v1.8.0';
+const CACHE = 'chuhe-shell-v1.9.0';
 const CORE = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/favicon.svg',
-  '/app.js',
-  '/jieqi-covered.css',
-  '/sandbox-pink-frame.css',
-  '/sandbox-gomoku-architecture.js',
-  '/chess-ui-updates.css',
-  '/chess-ui-updates.js',
-  '/connection-status.js',
-  '/enhancements-loader.js',
-  '/enhancements-runtime.css',
-  '/enhancements-runtime.js',
-  '/diagnostics.css',
-  '/diagnostics-client.js',
-  '/security-client.js',
-  '/responsive.css',
-  '/game-ux.css',
-  '/pwa.css',
-  '/pwa-client.js',
-  '/record-system.css',
-  '/record-system.js',
-  '/history.css',
-  '/history-client.js',
-  '/accessibility.css',
-  '/accessibility.js',
-  '/performance-client.js',
-  '/manifest.webmanifest'
+  '/', '/index.html', '/style.css', '/favicon.svg', '/app.js',
+  '/jieqi-covered.css', '/sandbox-pink-frame.css', '/sandbox-gomoku-architecture.js',
+  '/chess-ui-updates.css', '/chess-ui-updates.js', '/connection-status.js',
+  '/enhancements-loader.js', '/enhancements-runtime.css', '/enhancements-runtime.js',
+  '/diagnostics.css', '/diagnostics-client.js', '/security-client.js',
+  '/responsive.css', '/game-ux.css', '/manifest.webmanifest',
+  '/pwa.css', '/pwa-client.js', '/record-system.css', '/record-system.js',
+  '/history.css', '/history-client.js', '/accessibility.css', '/accessibility.js',
+  '/performance-client.js', '/platform-runtime.css', '/platform-runtime.js'
 ];
 
 self.addEventListener('install', (event) => {

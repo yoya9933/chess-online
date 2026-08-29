@@ -1,0 +1,7 @@
+.platform-panel{margin-top:14px;padding:12px;border:1px solid rgba(212,174,95,.22);border-radius:12px;background:rgba(8,14,15,.46)}
+.platform-button-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.platform-panel .danger{color:#ef9a91;border-color:rgba(239,154,145,.28)}
+.platform-panel button:disabled{opacity:.45;cursor:not-allowed}
+.platform-request{margin-top:10px;padding:10px;border-radius:10px;background:rgba(214,170,85,.08);border:1px solid rgba(214,170,85,.18)}
+.platform-request>span{display:block;margin-bottom:8px;color:#d8c08a;font-size:.9rem}
+.platform-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;border:1px solid rgba(216,192,138,.24);font-size:.78rem;color:#d8c08a}

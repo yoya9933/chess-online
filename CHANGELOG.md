@@ -1,23 +1,20 @@
 # Changelog
 
-## v1.8.1
+## v1.9.0
 
-- 新增正式 Release Engineering：`VERSION` 與 `package.json` 版本不一致時 CI 直接失敗。
-- Production Cloudflare 部署成功後，自動建立對應 `vX.Y.Z` Git tag 與 GitHub Release。
-- GitHub Release 使用該次 production commit 作為 target，並自動產生 release notes。
-- 新增 release regression tests，避免版本發布流程被後續修改破壞。
+- 新增伺服器裁決的認輸與和棋請求／接受／拒絕流程。
+- 新增三次重複局面自動和棋，以及同側持續將軍造成循環時的長將判負。
+- 勝負狀態新增明確 `result.type`：認輸、協議和棋、重複局面、長將、將死、將帥被吃與無合法著法。
+- D1 新增 `position_log`，只記錄局面指紋與裁決資訊，不依賴瀏覽器自行判定循環。
+- 和棋棋局也會寫入歷史對局並可進入棋譜回放。
+- 首頁棋局側欄新增「提議和棋／認輸」與對手和棋請求回覆 UI。
+
+## v1.8.1
+- `VERSION` 與 `package.json` 版本一致性納入 CI。
+- Production 部署成功後自動建立 Git tag、GitHub Release 與 release notes。
 
 ## v1.8.0
-
-- 房間同步改為自適應節流：前景最多約每 2.4 秒一次，背景分頁降至約每 15 秒一次，操作後仍會強制下一次即時同步。
-- 統一 `roomRequest` GET 路徑，房號保留在 query、玩家 Token 僅走 `X-Player-Token` Header。
-- enhancement scripts 改為保證依序載入，避免相依功能因動態 script 競速而偶發失效。
-- Worker 新增明確靜態資源 cache policy：版本資訊 no-store、App shell revalidate、JS/CSS/圖示支援 stale-while-revalidate。
-- Service Worker cache 升級至 v1.8.0 並納入目前全部 UI / PWA / accessibility / performance assets。
-- 新增 `window.xiangqiPerformance.snapshot()` 基礎效能診斷資訊。
-- CI 新增 400 KiB JS/CSS performance budget、同步間隔與 cache policy regression tests；Browser E2E 驗證效能層確實載入。
-- README 更新為目前 Cloudflare + D1 架構與 v1.8.0 功能／測試現況。
-
+- 自適應房間同步、靜態資源 cache policy、效能診斷與 performance budget。
 ## v1.7.0
 - 棋盤鍵盤操作、ARIA grid/gridcell、focus ring、在線文字、forced-colors 與非單靠紅綠辨識。
 ## v1.6.0
