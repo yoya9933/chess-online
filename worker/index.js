@@ -51,6 +51,22 @@ async function adjudicationResponse(request, env) {
   return response;
 }
 
+function withStaticCachePolicy(request, response) {
+  if (!response?.ok || request.method !== 'GET') return response;
+  const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/')) return response;
+  const headers = new Headers(response.headers);
+  const path = url.pathname;
+  if (path === '/version.json') {
+    headers.set('Cache-Control', 'no-store');
+  } else if (path === '/' || path === '/index.html' || path === '/sw.js' || path === '/manifest.webmanifest') {
+    headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+  } else if (/\.(?:js|css|svg|png|ico|webp|woff2?)$/i.test(path)) {
+    headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  }
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 async function route(request, env) {
   const blocked = await securityGate(request);
   if (blocked) return blocked;
@@ -61,23 +77,19 @@ async function route(request, env) {
     if (request.method === 'GET') return handleHistory(request, env);
     return Response.json({ error: '不支援的請求方式' }, { status: 405, headers: { Allow: 'GET' } });
   }
-
   if (url.pathname === '/api/adjudication') {
     if (request.method === 'POST') return adjudicationResponse(request, env);
     return Response.json({ error: '不支援的請求方式' }, { status: 405, headers: { Allow: 'POST' } });
   }
-
   if (url.pathname === "/api/rooms") {
     if (request.method === "GET") return roomResponse(request, env, handleGet);
     if (request.method === "POST") return roomResponse(request, env, handlePost);
     return Response.json({ error: "不支援的請求方式" }, { status: 405, headers: { Allow: "GET, POST" } });
   }
-
   if (url.pathname === "/api/change-side") {
     if (request.method === "POST") return roomResponse(request, env, handleChangeSide);
     return Response.json({ error: "不支援的請求方式" }, { status: 405, headers: { Allow: "POST" } });
   }
-
   return env.ASSETS.fetch(request);
 }
 
@@ -94,13 +106,12 @@ export default {
         headers: { 'Cache-Control': 'no-store' },
       });
     }
-
+    response = withStaticCachePolicy(request, response);
     response = secureResponse(response);
     response = attachRequestId(response, context.id);
     logRequest(context, response);
     return response;
   },
-
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(cleanupOldRooms(env.DB));
   },
