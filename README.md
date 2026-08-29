@@ -2,13 +2,13 @@
 
 科技風線上中國象棋網站，支援標準象棋、揭棋、雙人房間、單機、重連、棋譜、歷史對局、PWA 與無障礙鍵盤操作。
 
-**目前版本：v1.8.0** · 版本來源：[`VERSION`](./VERSION) / `package.json`
+**目前版本：v1.8.1** · 版本來源：[`VERSION`](./VERSION) / `package.json`
 
 ## 線上版本
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
 
-網站頁首會顯示 `v版本號 · Git commit`。每次 `main` 部署時 GitHub Actions 會自動產生 `public/version.json`，記錄版本、完整 Git SHA 與部署時間。
+網站頁首會顯示 `v版本號 · Git commit`。每次 `main` 部署時 GitHub Actions 會自動產生 `public/version.json`，記錄版本、完整 Git SHA 與部署時間。Production 部署成功後也會自動建立同版本 Git tag 與 GitHub Release。
 
 ## 主要功能
 
@@ -69,18 +69,18 @@ npm run dev
 ## 測試
 
 ```bash
+npm run check:version
 npm test
 npm run test:e2e
 npm run test:browser
 npm run build
 ```
 
-- `npm test`：棋規、房間生命週期、安全、監控、歷史、無障礙與效能 budget 單元測試。
+- `npm run check:version`：檢查 `VERSION` 與 `package.json` 完全一致。
+- `npm test`：棋規、房間生命週期、安全、監控、歷史、無障礙、效能與 release 流程 regression tests。
 - `npm run test:e2e`：Cloudflare test harness + D1 模擬兩名玩家的核心多人流程。
 - `npm run test:browser`：啟動本機 Wrangler，使用 Chrome / Chromium 驗證桌面與手機真實頁面。
 - `npm run build`：`wrangler deploy --dry-run`。
-
-多人 regression 覆蓋建房／加入、Header Token、走子同步、stale revision、揭棋遮罩、悔棋、重新開局與換邊。Browser smoke 同時驗證 PWA、最近對局、ARIA 棋盤與效能層載入。
 
 ## 部署
 
@@ -88,12 +88,14 @@ npm run build
 
 ```text
 npm ci
+→ version metadata check
 → unit tests
 → multiplayer E2E
 → browser E2E
 → wrangler deploy --dry-run
 → D1 migrations --remote
 → Cloudflare Worker deploy
+→ Git tag + GitHub Release
 ```
 
 正式 Cloudflare 設定：
@@ -108,12 +110,13 @@ npm ci
 
 ```text
 chess-online/
-├─ .github/workflows/        # CI / production deploy
+├─ .github/workflows/        # CI / production deploy / release
 ├─ public/                   # UI、PWA、responsive、accessibility、performance
 ├─ worker/                   # rooms、rules、security、lifecycle、history、observability
 ├─ drizzle/                  # D1 migrations
 ├─ test/                     # unit / regression tests
 ├─ e2e/                      # Worker+D1 E2E / browser smoke
+├─ scripts/                  # release/version checks
 ├─ CHANGELOG.md
 ├─ VERSION
 ├─ wrangler.jsonc
@@ -122,7 +125,7 @@ chess-online/
 
 ## 版本紀錄
 
-請見 [`CHANGELOG.md`](./CHANGELOG.md)。
+請見 [`CHANGELOG.md`](./CHANGELOG.md) 與 GitHub Releases。
 
 ## 授權
 

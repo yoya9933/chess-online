@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: cloudflare-production
@@ -29,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate version metadata
+        run: npm run check:version
 
       - name: Run unit tests
         run: npm test
@@ -63,7 +66,7 @@ jobs:
       - name: Generate deployment version metadata
         shell: bash
         run: |
-          VERSION="$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
+          VERSION="$(cat VERSION)"
           DEPLOYED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf '{\n  "version": "%s",\n  "commit": "%s",\n  "deployedAt": "%s"\n}\n' "$VERSION" "$GITHUB_SHA" "$DEPLOYED_AT" > public/version.json
 
@@ -80,3 +83,16 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          VERSION="$(cat VERSION)"
+          TAG="v${VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG already exists"
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
+          fi

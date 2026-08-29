@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.8.1
+
+- 新增正式 Release Engineering：`VERSION` 與 `package.json` 版本不一致時 CI 直接失敗。
+- Production Cloudflare 部署成功後，自動建立對應 `vX.Y.Z` Git tag 與 GitHub Release。
+- GitHub Release 使用該次 production commit 作為 target，並自動產生 release notes。
+- 新增 release regression tests，避免版本發布流程被後續修改破壞。
+
 ## v1.8.0
 
 - 房間同步改為自適應節流：前景最多約每 2.4 秒一次，背景分頁降至約每 15 秒一次，操作後仍會強制下一次即時同步。
