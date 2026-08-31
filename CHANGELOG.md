@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.14.8
+- 重整單機／入局表單欄位風格，讓「你的稱呼」「房間代碼」與「AI 難度」使用一致的暗色科技介面。
+- AI 難度移除瀏覽器原生白底 select 外觀，改成深色選單、自訂青色箭頭、hover / focus glow 與暗色 option。
+- 名稱與房號輸入改為 46px 高圓角欄位，統一邊框、背景、placeholder、focus ring 與手機版觸控高度。
+- 更新 PWA shell 至 v1.14.8 並預快取 `solo-setup.css`，確保新版表單樣式不會被舊快取卡住。
+- 新增 Solo Setup UI regression tests，驗證樣式載入順序、select 去原生化與 PWA cache generation。
+
 ## v1.14.7
 - 修正「我的陣營」整列視覺偏上的問題：標題與紅／黑 segmented control 改成同一列、同一垂直中心線。
 - 陣營區使用固定最小高度與 `align-content:center`，讓整列在區塊內真正上下置中；標題高度與按鈕基準統一為 38px，並做 2px optical adjustment。
