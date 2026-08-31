@@ -1,0 +1,44 @@
+/* v1.14.5 — Match Panel UI Polish */
+.game-info{min-width:0;gap:14px}
+.game-info>div:first-child{position:relative;isolation:isolate;overflow:hidden;padding:20px;border:1px solid rgba(91,222,232,.18);border-radius:18px;background:linear-gradient(155deg,rgba(8,24,29,.96),rgba(4,12,16,.9));box-shadow:0 18px 48px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.025)}
+.game-info>div:first-child::before{content:"";position:absolute;z-index:-1;left:-38px;top:-52px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(73,218,229,.08),transparent 70%);pointer-events:none}
+.game-info>div:first-child>.eyebrow{margin:0 0 10px;color:#69e6ee;font-size:9px;letter-spacing:.3em;opacity:.9}
+.game-info h2{margin:0 0 14px;font-size:30px;line-height:1.2;letter-spacing:.035em}
+.game-info .room-label{display:flex;align-items:center;gap:8px;width:100%;min-height:38px;margin:0;padding:9px 11px;border:1px solid rgba(93,222,232,.18);border-radius:10px;background:rgba(72,205,216,.045);color:#6ce4ec;font-size:11px;font-weight:700;line-height:1.45;letter-spacing:.12em;transition:border-color .16s ease,background .16s ease}
+.game-info .room-label-copyable:hover{border-color:rgba(103,230,238,.34);background:rgba(72,205,216,.075)}
+.game:not(.solo-mode) .room-label-copyable::after{content:"⧉";margin-left:auto;color:#718f91;font-size:14px;line-height:1;letter-spacing:0}
+.game-info .room-presence{display:flex;align-items:center;gap:8px;min-height:38px;margin:8px 0 0;padding:9px 11px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.026);color:#b7c4c2;font-size:11px;line-height:1.55;letter-spacing:.03em;opacity:1}
+.game-info .room-presence::before{content:"";display:block;flex:0 0 7px;width:7px;height:7px;margin:0;border-radius:50%;background:#7f8e8f;box-shadow:0 0 0 4px rgba(127,142,143,.07)}
+.game-info .room-presence[data-state="waiting"]{border-color:rgba(214,170,85,.13);background:rgba(214,170,85,.035)}
+.game-info .room-presence[data-state="waiting"]::before{background:#d6aa55;box-shadow:0 0 0 4px rgba(214,170,85,.09),0 0 12px rgba(214,170,85,.18)}
+.game-info .room-presence[data-state="ready"]{border-color:rgba(107,157,105,.15);background:rgba(107,157,105,.035)}
+.game-info .room-presence[data-state="ready"]::before{background:#76b276;box-shadow:0 0 0 4px rgba(107,157,105,.09),0 0 12px rgba(107,157,105,.16)}
+.game-info .room-presence[data-state="reconnecting"]::before{background:#d6aa55;box-shadow:0 0 0 4px rgba(214,170,85,.09)}
+.game-info .side-section{margin-top:18px;padding-top:0;border-top:0}
+.game-info .side-section-title{display:flex;align-items:center;min-height:16px;margin:0 0 9px;color:#718d8f;font:700 9px/1.2 monospace;letter-spacing:.18em}
+.game-info .side-section-title::before{content:"";display:block;flex:0 0 4px;width:4px;height:4px;margin-right:7px;border-radius:50%;background:#50c9d1;opacity:.75}
+.game-info .side-tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.game-info .side-tool-grid .secondary{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:42px;margin:0;padding:9px 10px;border:1px solid rgba(103,205,212,.2);border-radius:10px;background:rgba(74,181,189,.035);color:#cad6d4;font-size:11px;font-weight:600;letter-spacing:.025em;transition:transform .15s ease,border-color .15s ease,background .15s ease,color .15s ease}
+.game-info .side-tool-grid .secondary:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(105,230,238,.42);background:rgba(73,201,211,.085);color:#f0f8f7}
+.game-info #copy-link::before{content:"↗";color:#68dce4;font-size:13px}
+.game-info #sound-toggle::before{content:"♪";color:#d8bd73;font-size:13px}
+.game-info #setup-enter::before{content:"◇";color:#86a9aa;font-size:12px}
+.game-info .side-tool-grid #setup-enter{grid-column:1/-1}
+.game-info #sound-toggle[aria-pressed="true"]{border-color:rgba(216,192,138,.26);background:rgba(216,192,138,.05);box-shadow:none}
+.game-info #sound-toggle[aria-pressed="false"]{opacity:.58}
+.game-info .in-game-color{display:block;margin-top:18px;color:#9aa8a6}
+.game-info .side-choice-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border:1px solid rgba(255,255,255,.065);border-radius:11px;background:rgba(0,0,0,.16)}
+.game-info .side-choice-row .side-button{width:100%;min-height:38px;margin:0;padding:8px 9px;border:0;border-radius:8px;background:transparent;color:#7f8d8c;font-size:11px;font-weight:700;letter-spacing:.06em;transition:background .15s ease,color .15s ease,box-shadow .15s ease}
+.game-info .side-choice-row .side-button:hover:not(:disabled){background:rgba(255,255,255,.045);color:#d7dfde}
+.game-info .side-choice-row .side-button.red.active{background:rgba(166,47,37,.18);color:#f08b82;box-shadow:inset 0 0 0 1px rgba(224,100,88,.24)}
+.game-info .side-choice-row .side-button.black.active{background:rgba(255,255,255,.09);color:#f0f2f1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.game-info .side-choice-row .side-button:disabled{opacity:.42;cursor:not-allowed}
+.game-info .side-choice-row .side-button.active:disabled{opacity:1}
+.game-info .in-game-color.side-choice-locked .side-section-title::after{content:"已鎖定";display:inline-flex;align-items:center;min-height:18px;margin-left:7px;padding:2px 6px;border:1px solid rgba(255,255,255,.065);border-radius:999px;background:rgba(255,255,255,.035);color:#6f7c7b;font-size:8px;line-height:1;letter-spacing:.08em}
+.game-info .players:not(:empty){margin:0;padding:4px 14px;border:1px solid rgba(91,222,232,.1);border-radius:14px;background:rgba(7,18,22,.56)}
+.game-info .players:not(:empty) .player{min-height:46px;padding:12px 0;border-top:1px solid rgba(255,255,255,.055)}
+.game-info .players:not(:empty) .player:first-child{border-top:0}
+.game-info .captured-panel,.game-info .undo-panel,.game-info .replay-panel,.game-info .platform-panel{border-radius:14px}
+@media (min-width:901px){.game{grid-template-columns:minmax(300px,320px) minmax(0,1fr);gap:clamp(34px,4.5vw,68px)}.game-info{align-self:start}}
+@media (max-width:560px){.game-info>div:first-child{padding:16px;border-radius:15px}.game-info h2{margin-bottom:12px;font-size:27px}.game-info .room-label,.game-info .room-presence{min-height:36px;padding:8px 10px}.game-info .side-section{margin-top:15px}.game-info .side-tool-grid{gap:6px}.game-info .side-tool-grid .secondary{min-height:40px;padding:8px;font-size:10.5px}.game-info .side-choice-row .side-button{min-height:38px}}
+@media (prefers-reduced-motion:reduce){.game-info .room-label,.game-info .side-tool-grid .secondary,.game-info .side-choice-row .side-button{transition:none}.game-info .side-tool-grid .secondary:hover:not(:disabled){transform:none}}

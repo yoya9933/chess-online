@@ -1,6 +1,6 @@
 # 楚河棋局
 
-科技風線上中國象棋平台。**目前版本：v1.14.4**
+科技風線上中國象棋平台。**目前版本：v1.14.5**
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
 
@@ -13,6 +13,7 @@
 - Game State Hardening：悔棋／棋鐘／重連／重開／裁決的跨功能 regression tests
 - 棋鐘支援 10/20/30 分鐘、3+2、10+5 與自訂時間；重新開局保留時間控制但重置雙方時間
 - Timeout Finish Effect：時間歸零立即鎖盤，顯示「時間到／某方超時／某方勝」、專用音效，並同步給觀戰者與歷史／棋譜
+- Match Panel UI：好友房間資訊、等待狀態、工具列與陣營 segmented control 的卡片化 responsive 介面
 - 歷史對局、PWA、Responsive、Accessibility、安全與可觀測性
 
 新版 `.xqg` 會保存完整 Replay 局面、註記與結束原因；舊 `XQPGN/1` 因原格式只有著法文字，系統只辨識而不虛構缺少的局面。
