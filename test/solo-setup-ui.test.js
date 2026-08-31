@@ -14,9 +14,10 @@ test('solo setup stylesheet loads after match panel polish',()=>{
 test('name room and AI difficulty share the dark tech field treatment',()=>{
   assert.match(styles,/#ai-difficulty-wrap select/);
   assert.match(styles,/appearance:none/);
+  assert.match(styles,/color-scheme:dark/);
   assert.match(styles,/border-radius:10px/);
   assert.match(styles,/border-color:#62e4ed/);
-  assert.match(styles,/#name\}\s*$/m);
+  assert.match(styles,/#name\{text-transform:none\}/);
 });
 
 test('PWA shell includes the solo setup stylesheet and current cache generation',()=>{
