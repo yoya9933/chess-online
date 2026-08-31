@@ -6,6 +6,7 @@ const loader = readFileSync(new URL('../public/enhancements-loader.js', import.m
 const styles = readFileSync(new URL('../public/match-panel.css', import.meta.url), 'utf8');
 const alignStyles = readFileSync(new URL('../public/match-panel-align.css', import.meta.url), 'utf8');
 const serviceWorker = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8');
+const version = readFileSync(new URL('../VERSION', import.meta.url), 'utf8').trim();
 
 test('match panel polish stylesheet is loaded after the existing game styles', () => {
   assert.match(loader, /match-panel\.css/);
@@ -34,7 +35,7 @@ test('side choice label and segmented control share the same vertical center lin
 });
 
 test('service worker cannot pin an old enhancement loader forever', () => {
-  assert.match(serviceWorker, /chuhe-shell-v1\.14\.7/);
+  assert.ok(serviceWorker.includes(`chuhe-shell-v${version}`));
   assert.match(serviceWorker, /u\.pathname==='\/enhancements-loader\.js'/);
   assert.match(serviceWorker, /cache:'no-store'/);
   assert.match(serviceWorker, /match-panel-align\.css/);
