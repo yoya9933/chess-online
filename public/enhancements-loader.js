@@ -9,7 +9,7 @@
       }
     } catch {}
 
-    for (const file of ['enhancements-runtime.css','diagnostics.css','responsive.css','game-ux.css','pwa.css','record-system.css','history.css','accessibility.css','platform-runtime.css','analysis.css','timeout-finish.css','match-panel.css']) {
+    for (const file of ['enhancements-runtime.css','diagnostics.css','responsive.css','game-ux.css','pwa.css','record-system.css','history.css','accessibility.css','platform-runtime.css','analysis.css','timeout-finish.css','match-panel.css','match-panel-align.css']) {
       const stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
       stylesheet.href = `/${file}?v=${encodeURIComponent(cacheKey)}`;

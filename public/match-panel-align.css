@@ -1,0 +1,20 @@
+/* v1.14.6 — center the side-choice block */
+.game-info .in-game-color{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  align-items:stretch!important;
+  justify-items:stretch;
+  gap:10px!important;
+}
+.game-info .in-game-color>.side-section-title{
+  width:100%;
+  min-height:18px;
+  margin:0;
+  justify-content:center;
+  text-align:center;
+}
+.game-info .in-game-color>.side-section-title::before{display:none}
+.game-info .in-game-color>.side-choice-row{
+  width:100%;
+  margin:0 auto;
+}
