@@ -49,6 +49,7 @@
 .join-card>#ai-difficulty-wrap select{
   appearance:none;
   -webkit-appearance:none;
+  color-scheme:dark;
   padding-right:42px;
   cursor:pointer;
 }
