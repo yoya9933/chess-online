@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.14.7
+- 修正「我的陣營」整列視覺偏上的問題：標題與紅／黑 segmented control 改成同一列、同一垂直中心線。
+- 陣營區使用固定最小高度與 `align-content:center`，讓整列在區塊內真正上下置中；標題高度與按鈕基準統一為 38px，並做 2px optical adjustment。
+- 同步把修正寫進主 `match-panel.css` 與覆蓋 `match-panel-align.css`，避免舊 enhancement loader 只載到其中一份時版面仍失效。
+- 修正 PWA Service Worker 長期使用 `chuhe-shell-v1.14.0` cache 的問題；升級 shell cache，並讓 `enhancements-loader.js` 改成 network-first / no-store，避免新版 CSS 被舊 loader 卡住。
+- 新增 regression tests，驗證陣營列垂直置中與 PWA enhancement loader cache refresh。
+
 ## v1.14.6
 - 修正好友對局側欄「我的陣營」區塊未置中的版面問題。
 - 強制陣營區改為單欄 grid：標題水平置中，紅／黑 segmented control 在下方完整撐滿可用寬度。
