@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.14.9
+- 修正手機版橫向跑版：限制首頁大型 `XIANGQI // ONLINE ARENA` 裝飾文字在 viewport 內，不再把 `scrollWidth` 撐出螢幕。
+- 新增最後載入的 `mobile-hardening.css`，統一限制主容器、棋盤、房間面板、棋鐘、分析與工具列的 `min-width` / `max-width`。
+- 560px 以下 Header 改為可換列 grid，版本資訊獨立一列；380px 以下將入局選項、房間工具與陣營選擇改為單欄 fallback。
+- 棋盤手機寬度改以父容器 `100%` 為準，避免 `vw` 與 safe-area / main padding 疊加造成超寬。
+- Browser E2E smoke 新增 390、360、320px 三種手機 viewport，並驗證 `mobile-hardening.css` 已載入。
+- PWA shell 升級至 v1.14.9 並預快取 `mobile-hardening.css`。
+
 ## v1.14.8
 - 重整單機／入局表單欄位風格，讓「你的稱呼」「房間代碼」與「AI 難度」使用一致的暗色科技介面。
 - AI 難度移除瀏覽器原生白底 select 外觀，改成深色選單、自訂青色箭頭、hover / focus glow 與暗色 option。
