@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 const loader=readFileSync(new URL('../public/enhancements-loader.js',import.meta.url),'utf8');
 const styles=readFileSync(new URL('../public/solo-setup.css',import.meta.url),'utf8');
 const sw=readFileSync(new URL('../public/sw.js',import.meta.url),'utf8');
+const version=readFileSync(new URL('../VERSION',import.meta.url),'utf8').trim();
 
 test('solo setup stylesheet loads after match panel polish',()=>{
   assert.match(loader,/solo-setup\.css/);
@@ -21,6 +22,6 @@ test('name room and AI difficulty share the dark tech field treatment',()=>{
 });
 
 test('PWA shell includes the solo setup stylesheet and current cache generation',()=>{
-  assert.match(sw,/chuhe-shell-v1\.14\.8/);
+  assert.ok(sw.includes(`chuhe-shell-v${version}`));
   assert.match(sw,/solo-setup\.css/);
 });
