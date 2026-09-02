@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.22.3
+- Ponytail cleanup：先重用既有樣式再刪除重複層，不新增 dependency、不改產品功能。
+- 刪除 `match-panel-align.css`；其陣營垂直置中規則早已完整存在 `match-panel.css`，不再維護兩份相同 CSS。
+- 將 `mobile-hardening.css` 的有效規則收斂進 `responsive.css`，並讓 `responsive.css` 成為最後載入的 responsive layer，移除一個額外 stylesheet request 與 PWA cache asset。
+- 合併重複的棋盤寬度、手機棋子字級、Header 與窄螢幕 fallback 規則；保留 390／360／320px Browser E2E 與原有 regression coverage。
+- 更新 loader、Service Worker、tests 與 browser smoke，明確驗證被刪除的 hotfix assets 不會再次加入。
+- PWA shell 升級至 v1.22.3。
+
+## v1.22.2
+- 修正手機「分享棋譜」把完整 XQPGN/2 JSON 直接塞進 Web Share 文字 payload 而可能被 Android 分享 Intent 拒絕的問題。
+- 支援時優先使用 Web Share API 分享 `.xqg` 檔案；不支援檔案分享時先複製完整棋譜，再分享簡短訊息與網址。
+- Clipboard 不可用時保留 copy fallback；使用者取消分享不視為錯誤，真正失敗時顯示可操作的替代提示。
+- PWA shell 升級至 v1.22.2。
+
 ## v1.22.1
 - 修正手機版棋子中文字在窄螢幕下相對圓形棋子過大的問題；560px 以下由原本最高約 5.6vw 改為 `clamp(14px, 4.4vw, 21px)`。
 - 棋子文字固定 `line-height: 1`、單行置中並限制溢出，避免「車／馬／象／士／將／炮／兵」等字形碰出或穿過棋子圓框。
@@ -43,7 +57,7 @@
 ## v1.14.6
 - 修正好友對局側欄「我的陣營」區塊未置中的版面問題。
 - 強制陣營區改為單欄 grid：標題水平置中，紅／黑 segmented control 在下方完整撐滿可用寬度。
-- 移除陣營標題前的裝飾圓點，避免視覺中心被圖示偏移；鎖定 badge 仍會與標題一起置中。
+- 移除陣營標題前的小圓點，避免視覺中心被圖示偏移；鎖定 badge 仍會與標題一起置中。
 - 新增陣營置中 regression assertions，避免舊 `.in-game-color { display:flex }` 樣式再次覆蓋新版布局。
 
 ## v1.14.5

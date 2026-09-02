@@ -46,7 +46,7 @@ for page in "$DESKTOP" "$MOBILE_390" "$MOBILE_360" "$MOBILE_320"; do
   grep -q 'aria-live="polite"' "$page"
   grep -q 'id="adjudication-panel"' "$page"
   grep -q 'platform-runtime.js' "$page"
-  grep -q 'mobile-hardening.css' "$page"
+  grep -q 'responsive.css' "$page"
 done
 
 printf 'Browser smoke passed with %s at desktop and 390/360/320px mobile viewports.\n' "$BROWSER"

@@ -7,9 +7,10 @@ const styles=readFileSync(new URL('../public/solo-setup.css',import.meta.url),'u
 const sw=readFileSync(new URL('../public/sw.js',import.meta.url),'utf8');
 const version=readFileSync(new URL('../VERSION',import.meta.url),'utf8').trim();
 
-test('solo setup stylesheet loads after match panel polish',()=>{
+test('solo setup loads after match panel and before final responsive rules',()=>{
   assert.match(loader,/solo-setup\.css/);
-  assert.ok(loader.indexOf('solo-setup.css')>loader.indexOf('match-panel-align.css'));
+  assert.ok(loader.indexOf('solo-setup.css')>loader.indexOf('match-panel.css'));
+  assert.ok(loader.indexOf('responsive.css')>loader.indexOf('solo-setup.css'));
 });
 
 test('name room and AI difficulty share the dark tech field treatment',()=>{
