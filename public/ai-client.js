@@ -26,6 +26,34 @@
     sync();
   }
 
+  const opposite = (color) => color === 'red' ? 'black' : 'red';
+  const sameMove = (a, b) => a?.from?.x === b?.from?.x && a?.from?.y === b?.from?.y && a?.to?.x === b?.to?.x && a?.to?.y === b?.to?.y;
+  function positionSignature(board, turn) {
+    return `${turn}|${board.map((row) => row.map((piece) => !piece ? '.' : `${piece.c[0]}${piece.h ? `h${piece.o || '?'}` : piece.t || '?'}`).join(',')).join('/')}`;
+  }
+  function repeatedCheckingPosition(move, color) {
+    const variant = state.variant || 'standard';
+    const next = globalThis.ChuheAI.applyMove(state.board, move);
+    const nextTurn = opposite(color);
+    if (!inCheck(nextTurn, next)) return 0;
+    const key = positionSignature(next, nextTurn);
+    const repeats = (state.history || []).filter((entry) => entry?.position?.board && positionSignature(entry.position.board, entry.position.turn || nextTurn) === key).length;
+    if (!repeats || globalThis.ChuheAI.legalMoves(next, nextTurn, variant).length === 0) return 0;
+    return repeats;
+  }
+  function avoidPerpetualCheck(choice, color) {
+    const repeats = repeatedCheckingPosition(choice, color);
+    if (!repeats) return choice;
+    const variant = state.variant || 'standard';
+    const originalScore = globalThis.ChuheAI.evaluate(globalThis.ChuheAI.applyMove(state.board, choice), color, variant);
+    const alternative = globalThis.ChuheAI.legalMoves(state.board, color, variant)
+      .filter((move) => !sameMove(move, choice) && !repeatedCheckingPosition(move, color))
+      .map((move) => ({ move, score: globalThis.ChuheAI.evaluate(globalThis.ChuheAI.applyMove(state.board, move), color, variant) }))
+      .sort((a, b) => b.score - a.score)[0];
+    if (!alternative) return choice;
+    return repeats >= 2 || alternative.score >= originalScore - 120 ? alternative.move : choice;
+  }
+
   makeAiMove = function makeAiMoveV3() {
     if (!localMode || sandboxActive || replayActive || setupActive || state.winner || state.turn === myColor) {
       aiThinking = false;
@@ -34,7 +62,7 @@
     }
 
     const aiColor = state.turn;
-    const choice = globalThis.ChuheAI.chooseMove(state.board, aiColor, state.variant || 'standard', difficulty);
+    const choice = avoidPerpetualCheck(globalThis.ChuheAI.chooseMove(state.board, aiColor, state.variant || 'standard', difficulty), aiColor);
     if (!choice) {
       state.winner = myColor;
       aiThinking = false;
