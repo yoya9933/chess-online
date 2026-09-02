@@ -33,7 +33,7 @@ test('mobile header can wrap version metadata without horizontal overflow', () =
 });
 
 test('PWA and browser smoke include current mobile hardening assets and narrow widths', () => {
-  assert.match(sw, new RegExp(`chuhe-shell-v${version.replaceAll('.', '\\.')}`));
+  assert.ok(sw.includes(`chuhe-shell-v${version}`));
   assert.match(sw, /mobile-hardening\.css/);
   assert.match(browser, /--window-size=390,844/);
   assert.match(browser, /--window-size=360,800/);
