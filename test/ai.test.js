@@ -130,6 +130,22 @@ test('difficulty modes and search diagnostics are wired in the UI', () => {
   assert.match(client, /profiles/);
 });
 
+test('standard solo AI has a weighted opening book and falls back to search', () => {
+  const client = readFileSync(new URL('../public/ai-client.js', import.meta.url), 'utf8');
+  assert.match(client, /const OPENING_BOOK/);
+  assert.match(client, /炮二平五/);
+  assert.match(client, /馬二進三/);
+  assert.match(client, /兵七進一/);
+  assert.match(client, /相三進五/);
+  assert.match(client, /function historyBookKey/);
+  assert.match(client, /function openingBookMove/);
+  assert.match(client, /state\.variant \|\| 'standard'\) !== 'standard'/);
+  assert.match(client, /difficulty === 'hard' \? 2 : difficulty === 'normal' \? 3/);
+  assert.match(client, /bookChoice \|\| globalThis\.ChuheAI\.chooseMove/);
+  assert.match(client, /source: 'opening-book'/);
+  assert.match(client, /openingBookLines/);
+});
+
 test('solo AI breaks repeated checking loops without suppressing checkmate', () => {
   const client = readFileSync(new URL('../public/ai-client.js', import.meta.url), 'utf8');
   assert.match(client, /function repeatedCheckingPosition/);
@@ -137,7 +153,7 @@ test('solo AI breaks repeated checking loops without suppressing checkmate', () 
   assert.match(client, /legalMoves\(next, nextTurn, variant\)\.length === 0/);
   assert.match(client, /repeats >= 2/);
   assert.match(client, /alternative\.score >= originalScore - 120/);
-  assert.match(client, /avoidPerpetualCheck\(globalThis\.ChuheAI\.chooseMove/);
+  assert.match(client, /avoidPerpetualCheck\(proposed, aiColor\)/);
 });
 
 test('AI 3.1 uses piece-directed generation instead of testing all 90 destinations', () => {

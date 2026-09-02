@@ -2,6 +2,107 @@
   if (!globalThis.ChuheAI) return;
   const KEY = 'xiangqi-ai-difficulty';
   let difficulty = localStorage.getItem(KEY) || 'normal';
+  let lastDecision = null;
+
+  const OPENING_BOOK = Object.freeze({
+    '': [
+      { key: '7774', weight: 40, name: '炮二平五' },
+      { key: '9776', weight: 28, name: '馬二進三' },
+      { key: '6252', weight: 18, name: '兵七進一' },
+      { key: '9674', weight: 10, name: '相三進五' },
+      { key: '7174', weight: 4, name: '炮八平五' }
+    ],
+    '7774': [
+      { key: '0726', weight: 52, name: '馬８進７' },
+      { key: '0122', weight: 28, name: '馬２進３' },
+      { key: '2724', weight: 14, name: '炮８平５' },
+      { key: '3646', weight: 6, name: '卒７進１' }
+    ],
+    '9776': [
+      { key: '0726', weight: 48, name: '馬８進７' },
+      { key: '3646', weight: 24, name: '卒７進１' },
+      { key: '2724', weight: 18, name: '炮８平５' },
+      { key: '0122', weight: 10, name: '馬２進３' }
+    ],
+    '6252': [
+      { key: '0726', weight: 42, name: '馬８進７' },
+      { key: '3646', weight: 30, name: '卒７進１' },
+      { key: '2724', weight: 18, name: '炮８平５' },
+      { key: '0122', weight: 10, name: '馬２進３' }
+    ],
+    '9674': [
+      { key: '2724', weight: 38, name: '炮８平５' },
+      { key: '0726', weight: 34, name: '馬８進７' },
+      { key: '3646', weight: 18, name: '卒７進１' },
+      { key: '0122', weight: 10, name: '馬２進３' }
+    ],
+    '7174': [
+      { key: '0122', weight: 42, name: '馬２進３' },
+      { key: '0726', weight: 32, name: '馬８進７' },
+      { key: '2124', weight: 16, name: '炮２平５' },
+      { key: '3242', weight: 10, name: '卒３進１' }
+    ],
+    '7774,0726': [
+      { key: '9776', weight: 60, name: '馬二進三' },
+      { key: '6252', weight: 25, name: '兵七進一' },
+      { key: '9172', weight: 15, name: '馬八進七' }
+    ],
+    '7774,0122': [
+      { key: '9776', weight: 55, name: '馬二進三' },
+      { key: '6252', weight: 25, name: '兵七進一' },
+      { key: '9172', weight: 20, name: '馬八進七' }
+    ],
+    '9776,0726': [
+      { key: '7774', weight: 50, name: '炮二平五' },
+      { key: '6252', weight: 30, name: '兵七進一' },
+      { key: '9674', weight: 20, name: '相三進五' }
+    ],
+    '6252,0726': [
+      { key: '9776', weight: 50, name: '馬二進三' },
+      { key: '7774', weight: 35, name: '炮二平五' },
+      { key: '9674', weight: 15, name: '相三進五' }
+    ],
+    '9674,2724': [
+      { key: '9776', weight: 55, name: '馬二進三' },
+      { key: '6252', weight: 25, name: '兵七進一' },
+      { key: '7774', weight: 20, name: '炮二平五' }
+    ],
+    '7774,0726,9776': [
+      { key: '0807', weight: 50, name: '車９平８' },
+      { key: '0122', weight: 35, name: '馬２進３' },
+      { key: '3646', weight: 15, name: '卒７進１' }
+    ],
+    '9776,0726,7774': [
+      { key: '0807', weight: 50, name: '車９平８' },
+      { key: '0122', weight: 35, name: '馬２進３' },
+      { key: '3646', weight: 15, name: '卒７進１' }
+    ],
+    '6252,0726,9776': [
+      { key: '0807', weight: 45, name: '車９平８' },
+      { key: '0122', weight: 35, name: '馬２進３' },
+      { key: '3646', weight: 20, name: '卒７進１' }
+    ],
+    '7774,0726,9776,0807': [
+      { key: '9897', weight: 65, name: '車一平二' },
+      { key: '6252', weight: 20, name: '兵七進一' },
+      { key: '9172', weight: 15, name: '馬八進七' }
+    ],
+    '9776,0726,7774,0807': [
+      { key: '9897', weight: 65, name: '車一平二' },
+      { key: '6252', weight: 20, name: '兵七進一' },
+      { key: '9172', weight: 15, name: '馬八進七' }
+    ],
+    '7774,0726,9776,0807,9897': [
+      { key: '0122', weight: 60, name: '馬２進３' },
+      { key: '3646', weight: 25, name: '卒７進１' },
+      { key: '2724', weight: 15, name: '炮８平５' }
+    ],
+    '9776,0726,7774,0807,9897': [
+      { key: '0122', weight: 60, name: '馬２進３' },
+      { key: '3646', weight: 25, name: '卒７進１' },
+      { key: '2724', weight: 15, name: '炮８平５' }
+    ]
+  });
 
   function installControl() {
     const form = document.querySelector('#join-form');
@@ -27,7 +128,38 @@
   }
 
   const opposite = (color) => color === 'red' ? 'black' : 'red';
+  const moveKey = (move) => `${move.from.y}${move.from.x}${move.to.y}${move.to.x}`;
   const sameMove = (a, b) => a?.from?.x === b?.from?.x && a?.from?.y === b?.from?.y && a?.to?.x === b?.to?.x && a?.to?.y === b?.to?.y;
+  function historyBookKey() {
+    return (state.history || [])
+      .map((entry) => entry?.position?.lastAction)
+      .filter((move) => move?.from && move?.to)
+      .map(moveKey)
+      .join(',');
+  }
+  function openingBookMove(color) {
+    if ((state.variant || 'standard') !== 'standard') return null;
+    const line = historyBookKey();
+    const entries = OPENING_BOOK[line];
+    if (!entries?.length) return null;
+    const legalByKey = new Map(globalThis.ChuheAI.legalMoves(state.board, color, 'standard').map((move) => [moveKey(move), move]));
+    const available = entries.filter((entry) => legalByKey.has(entry.key));
+    if (!available.length) return null;
+    const limit = difficulty === 'hard' ? 2 : difficulty === 'normal' ? 3 : available.length;
+    const candidates = available.slice(0, limit);
+    const total = candidates.reduce((sum, entry) => sum + entry.weight, 0);
+    let roll = Math.random() * total;
+    let picked = candidates[candidates.length - 1];
+    for (const entry of candidates) {
+      roll -= entry.weight;
+      if (roll <= 0) {
+        picked = entry;
+        break;
+      }
+    }
+    lastDecision = { source: 'opening-book', line, move: picked.key, name: picked.name, weight: picked.weight };
+    return legalByKey.get(picked.key);
+  }
   function positionSignature(board, turn) {
     return `${turn}|${board.map((row) => row.map((piece) => !piece ? '.' : `${piece.c[0]}${piece.h ? `h${piece.o || '?'}` : piece.t || '?'}`).join(',')).join('/')}`;
   }
@@ -55,7 +187,7 @@
     return repeats >= 2 || alternative.score >= originalScore - 120 ? alternative.move : choice;
   }
 
-  makeAiMove = function makeAiMoveV3() {
+  makeAiMove = function makeAiMoveV4() {
     if (!localMode || sandboxActive || replayActive || setupActive || state.winner || state.turn === myColor) {
       aiThinking = false;
       render();
@@ -63,7 +195,11 @@
     }
 
     const aiColor = state.turn;
-    const choice = avoidPerpetualCheck(globalThis.ChuheAI.chooseMove(state.board, aiColor, state.variant || 'standard', difficulty), aiColor);
+    const bookChoice = openingBookMove(aiColor);
+    const proposed = bookChoice || globalThis.ChuheAI.chooseMove(state.board, aiColor, state.variant || 'standard', difficulty);
+    if (!bookChoice) lastDecision = { source: 'search', move: proposed ? moveKey(proposed) : null };
+    const choice = avoidPerpetualCheck(proposed, aiColor);
+    if (choice && proposed && !sameMove(choice, proposed)) lastDecision = { source: 'perpetual-check-guard', move: moveKey(choice) };
     if (!choice) {
       state.winner = myColor;
       aiThinking = false;
@@ -106,6 +242,8 @@
     get difficulty() { return difficulty; },
     get profiles() { return globalThis.ChuheAI.profiles; },
     get lastSearch() { return globalThis.ChuheAI.getLastSearchStats?.() || null; },
+    get lastDecision() { return lastDecision ? { ...lastDecision } : null; },
+    get openingBookLines() { return Object.keys(OPENING_BOOK).length; },
     setDifficulty(value) {
       if (['easy', 'normal', 'hard'].includes(value)) {
         difficulty = value;
