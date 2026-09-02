@@ -42,6 +42,7 @@
     return repeats;
   }
   function avoidPerpetualCheck(choice, color) {
+    if (!choice) return choice;
     const repeats = repeatedCheckingPosition(choice, color);
     if (!repeats) return choice;
     const variant = state.variant || 'standard';
