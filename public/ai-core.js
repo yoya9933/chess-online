@@ -3,8 +3,6 @@
   const MATE = 900000;
   const SEARCH_ABORT = Symbol('search-abort');
 
-  // Piece-square tables are expressed from the moving side's point of view:
-  // row 0 is its home rank and row 9 is the opponent's home rank.
   const PST = {
     K: [
       [0, 0, 0, 10, 14, 10, 0, 0, 0],
@@ -93,14 +91,20 @@
   };
 
   const PROFILES = Object.freeze({
-    easy: Object.freeze({ maxDepth: 2, nodeLimit: 3000, timeMs: 90, quiescenceDepth: 2, ttLimit: 5000, randomTop: 4, randomJitter: 120 }),
-    normal: Object.freeze({ maxDepth: 5, nodeLimit: 32000, timeMs: 320, quiescenceDepth: 4, ttLimit: 36000, randomTop: 1, randomJitter: 0 }),
-    hard: Object.freeze({ maxDepth: 8, nodeLimit: 120000, timeMs: 850, quiescenceDepth: 6, ttLimit: 100000, randomTop: 1, randomJitter: 0 })
+    easy: Object.freeze({ maxDepth: 2, nodeLimit: 4000, timeMs: 90, quiescenceDepth: 2, ttLimit: 7000, randomTop: 4, randomJitter: 120 }),
+    normal: Object.freeze({ maxDepth: 6, nodeLimit: 60000, timeMs: 320, quiescenceDepth: 4, ttLimit: 65000, randomTop: 1, randomJitter: 0 }),
+    hard: Object.freeze({ maxDepth: 9, nodeLimit: 220000, timeMs: 850, quiescenceDepth: 6, ttLimit: 180000, randomTop: 1, randomJitter: 0 })
   });
+
+  const ORTHOGONAL = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const HORSE = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]];
+  const DIAGONAL_1 = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const DIAGONAL_2 = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
 
   let lastSearchStats = null;
   const opposite = (c) => c === 'red' ? 'black' : 'red';
-  const clone = (b) => b.map((r) => r.map((p) => p ? { ...p } : null));
+  // Search never mutates untouched pieces, so copying the ten row arrays is enough.
+  const clone = (b) => b.map((r) => r.slice());
   const inside = (p) => p && p.x >= 0 && p.x < 9 && p.y >= 0 && p.y < 10;
   const now = () => globalThis.performance?.now?.() ?? Date.now();
   const moveKey = (m) => `${m.from.y}${m.from.x}${m.to.y}${m.to.x}`;
@@ -126,7 +130,6 @@
     const ax = Math.abs(dx);
     const ay = Math.abs(dy);
     const red = p.c === 'red';
-    // Hidden Jieqi pieces are searched only by their public movement identity.
     const type = p.h ? p.o : p.t;
     const free = variant === 'jieqi' && !p.h;
     if (type === 'R') return (dx === 0 || dy === 0) && pathCount(f, t, b) === 0;
@@ -154,8 +157,6 @@
     const n = clone(b);
     const piece = n[move.from.y][move.from.x];
     const wasHidden = Boolean(piece?.h);
-    // Search must not reveal a hidden true type. It substitutes the public wrapper
-    // movement identity, while the real game state reveals normally in app.js.
     n[move.to.y][move.to.x] = { ...piece, h: false, t: wasHidden ? (piece.o || 'P') : piece.t, simulatedReveal: wasHidden };
     n[move.from.y][move.from.x] = null;
     return n;
@@ -172,21 +173,100 @@
     return VALUES[p.t] || 300;
   }
 
+  function addTarget(out, b, color, x, y) {
+    if (x < 0 || x >= 9 || y < 0 || y >= 10) return;
+    if (!b[y][x] || b[y][x].c !== color) out.push({ x, y });
+  }
+
+  function rayTargets(out, b, color, x, y, cannon = false) {
+    for (const [dx, dy] of ORTHOGONAL) {
+      let screened = false;
+      for (let tx = x + dx, ty = y + dy; tx >= 0 && tx < 9 && ty >= 0 && ty < 10; tx += dx, ty += dy) {
+        const target = b[ty][tx];
+        if (!cannon) {
+          if (!target) out.push({ x: tx, y: ty });
+          else {
+            if (target.c !== color) out.push({ x: tx, y: ty });
+            break;
+          }
+          continue;
+        }
+        if (!screened) {
+          if (!target) out.push({ x: tx, y: ty });
+          else screened = true;
+        } else if (target) {
+          if (target.c !== color) out.push({ x: tx, y: ty });
+          break;
+        }
+      }
+    }
+  }
+
+  function candidateTargets(b, x, y, variant = 'standard') {
+    const p = b[y]?.[x];
+    if (!p) return [];
+    const out = [];
+    const type = p.h ? p.o : p.t;
+    const red = p.c === 'red';
+    const free = variant === 'jieqi' && !p.h;
+
+    if (type === 'R' || type === 'C') {
+      rayTargets(out, b, p.c, x, y, type === 'C');
+      return out;
+    }
+    if (type === 'H') {
+      for (const [dx, dy] of HORSE) addTarget(out, b, p.c, x + dx, y + dy);
+      return out;
+    }
+    if (type === 'E') {
+      for (const [dx, dy] of DIAGONAL_2) {
+        const tx = x + dx, ty = y + dy;
+        if (free || (red ? ty >= 5 : ty <= 4)) addTarget(out, b, p.c, tx, ty);
+      }
+      return out;
+    }
+    if (type === 'A') {
+      for (const [dx, dy] of DIAGONAL_1) {
+        const tx = x + dx, ty = y + dy;
+        if (free || (tx >= 3 && tx <= 5 && (red ? ty >= 7 : ty <= 2))) addTarget(out, b, p.c, tx, ty);
+      }
+      return out;
+    }
+    if (type === 'K') {
+      for (const [dx, dy] of ORTHOGONAL) {
+        const tx = x + dx, ty = y + dy;
+        if (tx >= 3 && tx <= 5 && (red ? ty >= 7 : ty <= 2)) addTarget(out, b, p.c, tx, ty);
+      }
+      for (const dy of [-1, 1]) {
+        for (let ty = y + dy; ty >= 0 && ty < 10; ty += dy) {
+          const target = b[ty][x];
+          if (!target) continue;
+          if (Math.abs(ty - y) > 1 && target.c !== p.c && target.t === 'K') out.push({ x, y: ty });
+          break;
+        }
+      }
+      return out;
+    }
+    if (type === 'P') {
+      addTarget(out, b, p.c, x, y + (red ? -1 : 1));
+      if (red ? y <= 4 : y >= 5) {
+        addTarget(out, b, p.c, x - 1, y);
+        addTarget(out, b, p.c, x + 1, y);
+      }
+    }
+    return out;
+  }
+
   function moves(b, color, variant = 'standard') {
     const out = [];
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 9; x++) {
         if (b[y]?.[x]?.c !== color) continue;
-        for (let ty = 0; ty < 10; ty++) {
-          for (let tx = 0; tx < 9; tx++) {
-            if (!legal(color, { y, x }, { y: ty, x: tx }, b, variant)) continue;
-            const capture = b[ty][tx];
-            out.push({
-              from: { y, x },
-              to: { y: ty, x: tx },
-              capture: capture ? pieceValue(capture) : 0
-            });
-          }
+        const from = { y, x };
+        for (const to of candidateTargets(b, x, y, variant)) {
+          if (!legal(color, from, to, b, variant)) continue;
+          const capture = b[to.y][to.x];
+          out.push({ from, to, capture: capture ? pieceValue(capture) : 0 });
         }
       }
     }
@@ -194,8 +274,6 @@
   }
 
   function pstValue(p, x, y) {
-    // A covered Jieqi piece deliberately receives no type-specific positional
-    // bonus. Its actual identity is not public information.
     if (!p || p.h || !PST[p.t]) return 0;
     const row = p.c === 'red' ? 9 - y : y;
     return PST[p.t][row]?.[x] || 0;
@@ -221,9 +299,6 @@
   }
 
   function positionKey(b, turn, variant) {
-    // Do not include p.t for covered pieces. This is both a search key and an
-    // information boundary: two positions differing only by secret identities
-    // intentionally map to the same TT state.
     let key = `${variant === 'jieqi' ? 'j' : 's'}${turn === 'red' ? 'r' : 'b'}|`;
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 9; x++) {
@@ -441,7 +516,8 @@
         cutoffs: 0,
         elapsedMs: Math.round((now() - start) * 10) / 10,
         score: -MATE,
-        aborted: false
+        aborted: false,
+        moveGenerator: 'piece-directed'
       };
       return null;
     }
@@ -494,7 +570,8 @@
       cutoffs: ctx.cutoffs,
       elapsedMs: Math.round((now() - start) * 10) / 10,
       score: bestScore,
-      aborted
+      aborted,
+      moveGenerator: 'piece-directed'
     };
     return bestMove;
   }

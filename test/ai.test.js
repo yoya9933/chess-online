@@ -26,6 +26,10 @@ function sameMove(a, b) {
     a?.to?.x === b?.to?.x && a?.to?.y === b?.to?.y;
 }
 
+function hasMove(list, from, to) {
+  return list.some((move) => sameMove(move, { from, to }));
+}
+
 test('AI exposes evaluation and returns a legal iterative alpha-beta move', () => {
   const b = board();
   assert.equal(typeof AI.evaluate, 'function');
@@ -46,13 +50,48 @@ test('AI exposes evaluation and returns a legal iterative alpha-beta move', () =
   assert.ok(stats.qNodes > 0);
   assert.ok(stats.ttSize > 0);
   assert.ok(stats.ttStores > 0);
+  assert.equal(stats.moveGenerator, 'piece-directed');
 });
 
-test('AI 3.0 difficulty profiles target deeper iterative searches', () => {
-  assert.ok(AI.profiles.normal.maxDepth >= 5);
-  assert.ok(AI.profiles.hard.maxDepth >= 8);
+test('AI 3.1 profiles raise search ceilings without increasing think-time caps', () => {
+  assert.ok(AI.profiles.normal.maxDepth >= 6);
+  assert.ok(AI.profiles.hard.maxDepth >= 9);
+  assert.equal(AI.profiles.normal.timeMs, 320);
+  assert.equal(AI.profiles.hard.timeMs, 850);
   assert.ok(AI.profiles.hard.nodeLimit > AI.profiles.normal.nodeLimit);
   assert.ok(AI.profiles.hard.quiescenceDepth > AI.profiles.normal.quiescenceDepth);
+});
+
+test('piece-directed generator preserves rook blockers and cannon screens', () => {
+  const rookBoard = emptyBoard();
+  rookBoard[7][4] = { t: 'R', c: 'red' };
+  rookBoard[7][2] = { t: 'P', c: 'black' };
+  rookBoard[7][6] = { t: 'P', c: 'red' };
+  const rookMoves = AI.legalMoves(rookBoard, 'red', 'standard');
+  assert.ok(hasMove(rookMoves, { y: 7, x: 4 }, { y: 7, x: 2 }));
+  assert.ok(hasMove(rookMoves, { y: 7, x: 4 }, { y: 7, x: 3 }));
+  assert.equal(hasMove(rookMoves, { y: 7, x: 4 }, { y: 7, x: 1 }), false);
+  assert.equal(hasMove(rookMoves, { y: 7, x: 4 }, { y: 7, x: 6 }), false);
+
+  const cannonBoard = emptyBoard();
+  cannonBoard[7][4] = { t: 'C', c: 'red' };
+  cannonBoard[7][3] = { t: 'P', c: 'red' };
+  cannonBoard[7][1] = { t: 'R', c: 'black' };
+  const cannonMoves = AI.legalMoves(cannonBoard, 'red', 'standard');
+  assert.ok(hasMove(cannonMoves, { y: 7, x: 4 }, { y: 7, x: 1 }));
+  assert.equal(hasMove(cannonMoves, { y: 7, x: 4 }, { y: 7, x: 2 }), false);
+  assert.ok(hasMove(cannonMoves, { y: 7, x: 4 }, { y: 7, x: 5 }));
+});
+
+test('search board copies share untouched pieces but never mutate the input board', () => {
+  const b = board();
+  const originalKing = b[0][4];
+  const originalRook = b[9][0];
+  const next = AI.applyMove(b, { from: { y: 9, x: 0 }, to: { y: 8, x: 0 } });
+  assert.equal(next[0][4], originalKing);
+  assert.notEqual(next[8][0], originalRook);
+  assert.equal(b[9][0], originalRook);
+  assert.equal(b[8][0], null);
 });
 
 test('piece-square tables reward useful horse centralization', () => {
@@ -101,7 +140,16 @@ test('solo AI breaks repeated checking loops without suppressing checkmate', () 
   assert.match(client, /avoidPerpetualCheck\(globalThis\.ChuheAI\.chooseMove/);
 });
 
-test('AI 3.0 source contains iterative deepening, TT, quiescence and move ordering', () => {
+test('AI 3.1 uses piece-directed generation instead of testing all 90 destinations', () => {
+  const core = readFileSync(new URL('../public/ai-core.js', import.meta.url), 'utf8');
+  assert.match(core, /function candidateTargets/);
+  assert.match(core, /function rayTargets/);
+  assert.match(core, /for \(const to of candidateTargets/);
+  assert.doesNotMatch(core, /for \(let ty = 0; ty < 10; ty\+\+\)/);
+  assert.match(core, /const clone = \(b\) => b\.map\(\(r\) => r\.slice\(\)\)/);
+});
+
+test('AI 3.x source keeps iterative deepening, TT, quiescence and move ordering', () => {
   const core = readFileSync(new URL('../public/ai-core.js', import.meta.url), 'utf8');
   assert.match(core, /for \(let depth = 1; depth <= profile\.maxDepth; depth\+\+\)/);
   assert.match(core, /function positionKey/);
