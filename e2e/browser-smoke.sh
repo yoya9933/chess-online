@@ -5,7 +5,9 @@ PORT="${PORT:-8787}"
 BASE="http://127.0.0.1:${PORT}"
 LOG="${RUNNER_TEMP:-/tmp}/chuhe-wrangler.log"
 DESKTOP="${RUNNER_TEMP:-/tmp}/chuhe-desktop.html"
-MOBILE="${RUNNER_TEMP:-/tmp}/chuhe-mobile.html"
+MOBILE_390="${RUNNER_TEMP:-/tmp}/chuhe-mobile-390.html"
+MOBILE_360="${RUNNER_TEMP:-/tmp}/chuhe-mobile-360.html"
+MOBILE_320="${RUNNER_TEMP:-/tmp}/chuhe-mobile-320.html"
 
 npx wrangler dev --local --ip 127.0.0.1 --port "$PORT" >"$LOG" 2>&1 &
 SERVER_PID=$!
@@ -30,9 +32,11 @@ if [ -z "$BROWSER" ]; then echo "No supported Chrome/Chromium binary found" >&2;
 
 COMMON_FLAGS=(--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3000)
 "$BROWSER" "${COMMON_FLAGS[@]}" --window-size=1440,900 --dump-dom "$BASE/" >"$DESKTOP"
-"$BROWSER" "${COMMON_FLAGS[@]}" --window-size=390,844 --dump-dom "$BASE/" >"$MOBILE"
+"$BROWSER" "${COMMON_FLAGS[@]}" --window-size=390,844 --dump-dom "$BASE/" >"$MOBILE_390"
+"$BROWSER" "${COMMON_FLAGS[@]}" --window-size=360,800 --dump-dom "$BASE/" >"$MOBILE_360"
+"$BROWSER" "${COMMON_FLAGS[@]}" --window-size=320,568 --dump-dom "$BASE/" >"$MOBILE_320"
 
-for page in "$DESKTOP" "$MOBILE"; do
+for page in "$DESKTOP" "$MOBILE_390" "$MOBILE_360" "$MOBILE_320"; do
   grep -q 'id="join-form"' "$page"
   grep -q '楚河棋局' "$page"
   grep -q 'manifest.webmanifest' "$page"
@@ -42,6 +46,7 @@ for page in "$DESKTOP" "$MOBILE"; do
   grep -q 'aria-live="polite"' "$page"
   grep -q 'id="adjudication-panel"' "$page"
   grep -q 'platform-runtime.js' "$page"
+  grep -q 'mobile-hardening.css' "$page"
 done
 
-printf 'Browser smoke passed with %s at desktop and mobile viewports.\n' "$BROWSER"
+printf 'Browser smoke passed with %s at desktop and 390/360/320px mobile viewports.\n' "$BROWSER"
