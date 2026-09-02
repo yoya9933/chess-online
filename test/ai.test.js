@@ -91,6 +91,16 @@ test('difficulty modes and search diagnostics are wired in the UI', () => {
   assert.match(client, /profiles/);
 });
 
+test('solo AI breaks repeated checking loops without suppressing checkmate', () => {
+  const client = readFileSync(new URL('../public/ai-client.js', import.meta.url), 'utf8');
+  assert.match(client, /function repeatedCheckingPosition/);
+  assert.match(client, /state\.history/);
+  assert.match(client, /legalMoves\(next, nextTurn, variant\)\.length === 0/);
+  assert.match(client, /repeats >= 2/);
+  assert.match(client, /alternative\.score >= originalScore - 120/);
+  assert.match(client, /avoidPerpetualCheck\(globalThis\.ChuheAI\.chooseMove/);
+});
+
 test('AI 3.0 source contains iterative deepening, TT, quiescence and move ordering', () => {
   const core = readFileSync(new URL('../public/ai-core.js', import.meta.url), 'utf8');
   assert.match(core, /for \(let depth = 1; depth <= profile\.maxDepth; depth\+\+\)/);
