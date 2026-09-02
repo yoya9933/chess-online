@@ -1,6 +1,6 @@
 # 楚河棋局
 
-科技風線上中國象棋平台。**目前版本：v1.14.8**
+科技風線上中國象棋平台。**目前版本：v1.14.9**
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
 
@@ -15,6 +15,7 @@
 - Timeout Finish Effect：時間歸零立即鎖盤，顯示「時間到／某方超時／某方勝」、專用音效，並同步給觀戰者與歷史／棋譜
 - Match Panel UI：好友房間資訊、等待狀態、工具列，以及與 segmented control 同一垂直中心線的陣營選擇
 - Solo Setup UI：名稱、房號與 AI 難度使用一致的暗色科技欄位，AI select 不再顯示瀏覽器原生白底外觀
+- Mobile Layout Hardening：修正手機橫向跑版，並對 390／360／320px 窄螢幕提供 Header、房間工具、陣營與棋盤 fallback
 - PWA shell 會刷新 enhancement loader，避免新版 UI 被舊 Service Worker cache 卡住
 - 歷史對局、PWA、Responsive、Accessibility、安全與可觀測性
 
