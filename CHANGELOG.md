@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.22.1
+- 修正手機版棋子中文字在窄螢幕下相對圓形棋子過大的問題；560px 以下由原本最高約 5.6vw 改為 `clamp(14px, 4.4vw, 21px)`。
+- 棋子文字固定 `line-height: 1`、單行置中並限制溢出，避免「車／馬／象／士／將／炮／兵」等字形碰出或穿過棋子圓框。
+- 同步在 `responsive.css` 與最後載入的 `mobile-hardening.css` 套用規則，降低舊樣式或載入順序造成回歸的風險。
+- 新增 Mobile Piece Typography regression assertions，驗證 390／360／320px 手機版會載入新的棋子字級與溢出保護。
+- PWA shell 升級至 v1.22.1，確保手機不會繼續使用舊的 responsive CSS 快取。
+
 ## v1.22.0
 - AI 3.0：將單機電腦從固定深度 Minimax 升級為 Iterative Deepening + Alpha-Beta，每次只採用完整搜尋完成的深度，超出時間／節點預算時保留上一層可靠結果。
 - 新增 Transposition Table，快取局面分數、深度、bound flag 與最佳著；TT key 對揭棋暗子只使用公開的包裝走法身份，不包含隱藏真實棋種。

@@ -1,4 +1,4 @@
-/* v1.14.9 — Mobile Layout Hotfix */
+/* v1.22.1 — Mobile Piece Typography Hotfix */
 html,
 body {
   max-width: 100%;
@@ -148,6 +148,16 @@ header,
   .game {
     width: 100%;
     gap: 14px !important;
+  }
+
+  .board .piece {
+    font-size: clamp(14px, 4.4vw, 21px) !important;
+    line-height: 1 !important;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    letter-spacing: 0 !important;
+    text-indent: 0 !important;
   }
 
   .game-info > div:first-child {

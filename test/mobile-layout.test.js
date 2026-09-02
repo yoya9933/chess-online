@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const loader = readFileSync(new URL('../public/enhancements-loader.js', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../public/mobile-hardening.css', import.meta.url), 'utf8');
+const responsive = readFileSync(new URL('../public/responsive.css', import.meta.url), 'utf8');
 const sw = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8');
 const version = readFileSync(new URL('../VERSION', import.meta.url), 'utf8').trim();
 const browser = readFileSync(new URL('../e2e/browser-smoke.sh', import.meta.url), 'utf8');
@@ -25,6 +26,14 @@ test('narrow phones receive stacked controls and parent-sized board', () => {
   assert.match(styles, /\.side-tool-grid[\s\S]*grid-template-columns:\s*1fr\s*!important/);
   assert.match(styles, /\.in-game-color[\s\S]*grid-template-columns:\s*1fr\s*!important/);
   assert.match(styles, /\.board[\s\S]*width:\s*min\(100%, 560px\)\s*!important/);
+});
+
+test('mobile piece glyphs scale down and stay inside circular pieces', () => {
+  assert.match(responsive, /\.piece\s*\{[\s\S]*font-size:\s*clamp\(14px, 4\.4vw, 21px\)/);
+  assert.match(styles, /\.board \.piece\s*\{[\s\S]*font-size:\s*clamp\(14px, 4\.4vw, 21px\)\s*!important/);
+  assert.match(styles, /\.board \.piece\s*\{[\s\S]*line-height:\s*1\s*!important/);
+  assert.match(styles, /\.board \.piece\s*\{[\s\S]*white-space:\s*nowrap/);
+  assert.match(styles, /\.board \.piece\s*\{[\s\S]*overflow:\s*hidden/);
 });
 
 test('mobile header can wrap version metadata without horizontal overflow', () => {

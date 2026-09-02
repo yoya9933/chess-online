@@ -63,7 +63,14 @@
   .side-tool-grid { grid-template-columns: 1fr 1fr; }
   .captured-panel, .undo-panel, .replay-panel { margin: 12px 0; }
   .board { width: min(calc(100vw - 24px), 560px); }
-  .piece { border-width: 1.5px; font-size: clamp(15px, 5.6vw, 27px); }
+  .piece {
+    border-width: 1.5px;
+    font-size: clamp(14px, 4.4vw, 21px);
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+  }
   .cell.target::after { width: 10px; height: 10px; }
   .sandbox-toolbar { width: 100%; margin-top: 0; }
   .sandbox-toolbar > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
