@@ -1,6 +1,6 @@
 # 楚河棋局
 
-科技風線上中國象棋平台。**目前版本：v1.14.9**
+科技風線上中國象棋平台。**目前版本：v1.22.0**
 
 正式站：<https://chuhe-xiangqi-online.sean8411.workers.dev>
 
@@ -8,7 +8,8 @@
 
 - 標準象棋／揭棋、伺服器權威棋規、裁決與 Chess Clock 2.0
 - Durable Object + WebSocket 即時通知，D1 權威狀態與 polling fallback
-- 正式觀戰、單機 AI 2.0（三段難度、Minimax + Alpha-Beta）
+- 正式觀戰、單機 AI 3.0：Iterative Deepening + Alpha-Beta + Transposition Table + Quiescence Search + Move Ordering + Piece-Square Tables
+- AI 三段難度搜尋上限為簡單 2 ply、普通 5 ply、困難 8 ply；依時間與節點預算採用最後完整搜尋深度，並保留揭棋暗子資訊隔離
 - `XQPGN/2` 棋譜：匯出／匯入 `.xqg`、逐手局面、點選跳手、註記、分析分支
 - Game State Hardening：悔棋／棋鐘／重連／重開／裁決的跨功能 regression tests
 - 棋鐘支援 10/20/30 分鐘、3+2、10+5 與自訂時間；重新開局保留時間控制但重置雙方時間
@@ -20,6 +21,8 @@
 - 歷史對局、PWA、Responsive、Accessibility、安全與可觀測性
 
 新版 `.xqg` 會保存完整 Replay 局面、註記與結束原因；舊 `XQPGN/1` 因原格式只有著法文字，系統只辨識而不虛構缺少的局面。
+
+AI 搜尋統計可由瀏覽器執行 `ChuhePlatform.ai.lastSearch` 查看，包括實際完成深度、nodes、quiescence nodes、TT hits/stores、cutoffs 與耗時。
 
 ## 驗證與部署
 

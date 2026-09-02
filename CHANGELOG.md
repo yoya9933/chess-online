@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.22.0
+- AI 3.0：將單機電腦從固定深度 Minimax 升級為 Iterative Deepening + Alpha-Beta，每次只採用完整搜尋完成的深度，超出時間／節點預算時保留上一層可靠結果。
+- 新增 Transposition Table，快取局面分數、深度、bound flag 與最佳著；TT key 對揭棋暗子只使用公開的包裝走法身份，不包含隱藏真實棋種。
+- 新增 Quiescence Search，在一般搜尋葉節點繼續計算吃子序列與被將軍時的應對，降低「剛吃到子就停止搜尋」造成的 horizon effect。
+- 新增 Move Ordering：TT 最佳著、MVV-LVA 類吃子排序、將軍著、killer moves、history heuristic 與中央化提示，提升 Alpha-Beta 剪枝效率。
+- 新增 Piece-Square Tables，讓車、炮、馬、兵、仕相與將帥的局面評估納入位置價值；揭棋未翻暗子不套用真實棋種位置表。
+- 難度搜尋上限調整為簡單 2 ply、普通 5 ply、困難 8 ply，並加入各級時間／節點／quiescence／TT 預算；殘局與低分支局面可實際完成更深搜尋。
+- 新增 `ChuheAI.getLastSearchStats()` 與 `ChuhePlatform.ai.lastSearch`，可查看完成深度、nodes、qNodes、TT hits/stores、cutoffs 與搜尋耗時。
+- 新增 AI 3.0 regression tests：迭代加深、TT、PST 中央化、quiescence 避免毒兵、三段難度，以及揭棋暗子真身資訊隔離。
+- PWA shell 升級至 v1.22.0，確保新版 `ai-core.js` / `ai-client.js` 不會被舊快取固定。
+
 ## v1.14.9
 - 修正手機版橫向跑版：限制首頁大型 `XIANGQI // ONLINE ARENA` 裝飾文字在 viewport 內，不再把 `scrollWidth` 撐出螢幕。
 - 新增最後載入的 `mobile-hardening.css`，統一限制主容器、棋盤、房間面板、棋鐘、分析與工具列的 `min-width` / `max-width`。
