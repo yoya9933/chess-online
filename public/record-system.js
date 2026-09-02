@@ -80,10 +80,94 @@
     if (payload?.format !== 'XQPGN/2' || !Array.isArray(payload.history) || !payload.finalState) throw new Error('不支援的棋譜格式');
     return { format: payload.format, headers, legacy: false, payload };
   }
+  function recordFilename() {
+    return `chuhe-${roomId || 'local'}-${new Date().toISOString().slice(0, 10)}.xqg`;
+  }
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.pointerEvents = 'none';
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+    const copied = Boolean(document.execCommand?.('copy'));
+    textarea.remove();
+    if (!copied) throw new Error('clipboard unavailable');
+    return true;
+  }
+  function makeRecordFile(text) {
+    if (typeof File !== 'function') return null;
+    return new File([text], recordFilename(), { type: 'text/plain;charset=utf-8' });
+  }
+  async function shareRecord() {
+    const text = buildRecordText();
+    const file = makeRecordFile(text);
+    try {
+      if (file && typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        await navigator.share({ title: '楚河棋局棋譜', text: '楚河棋局 XQPGN/2 棋譜檔', files: [file] });
+        toast?.('棋譜已分享');
+        return;
+      }
+
+      let copied = false;
+      try {
+        await copyText(text);
+        copied = true;
+      } catch {}
+
+      if (typeof navigator.share === 'function') {
+        await navigator.share({
+          title: '楚河棋局棋譜',
+          text: copied ? '完整棋譜已複製到剪貼簿，可直接貼到訊息中。' : '楚河棋局棋譜',
+          url: location.href,
+        });
+        toast?.(copied ? '已開啟分享；完整棋譜也已複製' : '已開啟分享；完整棋譜請改用下載');
+        return;
+      }
+
+      if (copied) {
+        toast?.('完整棋譜已複製，可直接貼上分享');
+        return;
+      }
+      throw new Error('share unavailable');
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      console.warn('record share failed', error);
+      try {
+        await copyText(text);
+        toast?.('分享失敗，完整棋譜已複製');
+      } catch {
+        toast?.('分享失敗，請改用下載棋譜');
+      }
+    }
+  }
 
   recordText = buildRecordText;
   window.xiangqiRecordText = buildRecordText;
   window.ChuheRecordCodec = { build: buildRecordText, parse: parseRecordText, payload: recordPayload };
+  window.ChuheRecordShare = { share: shareRecord, copy: () => copyText(buildRecordText()), filename: recordFilename };
+
+  const copyButton = document.querySelector('#record-copy');
+  if (copyButton) {
+    copyButton.onclick = async () => {
+      try {
+        await copyText(buildRecordText());
+        toast?.('棋譜已複製');
+      } catch {
+        toast?.('無法複製棋譜，請改用下載');
+      }
+    };
+  }
+
+  const shareButton = document.querySelector('#record-share');
+  if (shareButton) shareButton.onclick = shareRecord;
 
   const shareRow = document.querySelector('.replay-share');
   if (shareRow && !document.querySelector('#record-download')) {
@@ -92,7 +176,7 @@
     download.addEventListener('click', () => {
       const blob = new Blob([buildRecordText()], { type: 'text/plain;charset=utf-8' });
       const href = URL.createObjectURL(blob), link = document.createElement('a');
-      link.href = href; link.download = `chuhe-${roomId || 'local'}-${new Date().toISOString().slice(0, 10)}.xqg`;
+      link.href = href; link.download = recordFilename();
       document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(href); toast?.('棋譜已下載');
     });
     shareRow.appendChild(download);
