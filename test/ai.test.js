@@ -130,7 +130,7 @@ test('difficulty modes and search diagnostics are wired in the UI', () => {
   assert.match(client, /profiles/);
 });
 
-test('standard solo AI has a weighted opening book and falls back to search', () => {
+test('standard solo AI opening book supports transpositions and repeated-game variety', () => {
   const client = readFileSync(new URL('../public/ai-client.js', import.meta.url), 'utf8');
   assert.match(client, /const OPENING_BOOK/);
   assert.match(client, /炮二平五/);
@@ -138,6 +138,12 @@ test('standard solo AI has a weighted opening book and falls back to search', ()
   assert.match(client, /兵七進一/);
   assert.match(client, /相三進五/);
   assert.match(client, /function historyBookKey/);
+  assert.match(client, /function matchedOpeningLines/);
+  assert.match(client, /const seen = new Set\(played\)/);
+  assert.match(client, /keys\.every\(\(key\) => seen\.has\(key\)\)/);
+  assert.match(client, /const BOOK_MEMORY_KEY = 'xiangqi-ai-opening-memory'/);
+  assert.match(client, /repeatFactor = difficulty === 'hard' \? 0\.25 : 0/);
+  assert.match(client, /matchedBy: transposed \? 'transposition' : 'sequence'/);
   assert.match(client, /function openingBookMove/);
   assert.match(client, /state\.variant \|\| 'standard'\) !== 'standard'/);
   assert.match(client, /difficulty === 'hard' \? 2 : difficulty === 'normal' \? 3/);

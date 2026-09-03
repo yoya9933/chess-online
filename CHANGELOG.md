@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.24.1
+- Opening Book 改為 transposition-aware：同一組已知開局著法即使順序不同，或中間插入其他合法發展著，仍會匹配到最深的已知定式節點。
+- 同時命中多條同深度定式時會合併候選著與權重，再交由既有合法著生成器過濾，避免為每種走子順序重複維護棋譜。
+- 新增跨對局 Opening Book 選擇記憶：簡單／普通不連續重複同一節點的上一著，困難則將重複著權重降至 25%，保留棋力但增加可見變化。
+- Opening Book 僅在前 12 ply 內啟用，超出或無合法棋譜候選時自動回到 AI 搜尋；揭棋仍完全不套用標準象棋開局書。
+- `ChuhePlatform.ai.lastDecision` 的 Opening Book 決策新增 `matchedBy: sequence | transposition` 與 `repeatAvoided` 診斷欄位。
+- PWA shell 升級至 v1.24.1。
+
 ## v1.22.3
 - Ponytail cleanup：先重用既有樣式再刪除重複層，不新增 dependency、不改產品功能。
 - 刪除 `match-panel-align.css`；其陣營垂直置中規則早已完整存在 `match-panel.css`，不再維護兩份相同 CSS。

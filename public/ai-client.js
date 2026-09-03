@@ -1,8 +1,14 @@
 (() => {
   if (!globalThis.ChuheAI) return;
   const KEY = 'xiangqi-ai-difficulty';
+  const BOOK_MEMORY_KEY = 'xiangqi-ai-opening-memory';
   let difficulty = localStorage.getItem(KEY) || 'normal';
   let lastDecision = null;
+  let openingMemory = {};
+  try {
+    const saved = JSON.parse(localStorage.getItem(BOOK_MEMORY_KEY) || '{}');
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) openingMemory = saved;
+  } catch {}
 
   const OPENING_BOOK = Object.freeze({
     '': [
@@ -130,34 +136,78 @@
   const opposite = (color) => color === 'red' ? 'black' : 'red';
   const moveKey = (move) => `${move.from.y}${move.from.x}${move.to.y}${move.to.x}`;
   const sameMove = (a, b) => a?.from?.x === b?.from?.x && a?.from?.y === b?.from?.y && a?.to?.x === b?.to?.x && a?.to?.y === b?.to?.y;
-  function historyBookKey() {
+  function historyMoveKeys() {
     return (state.history || [])
       .map((entry) => entry?.position?.lastAction)
       .filter((move) => move?.from && move?.to)
-      .map(moveKey)
-      .join(',');
+      .map(moveKey);
+  }
+  function historyBookKey() {
+    return historyMoveKeys().join(',');
+  }
+  function matchedOpeningLines() {
+    const played = historyMoveKeys();
+    if (!played.length) return [''];
+    if (played.length > 12) return [];
+    const seen = new Set(played);
+    const matches = Object.keys(OPENING_BOOK)
+      .filter(Boolean)
+      .map((line) => ({ line, keys: line.split(',') }))
+      .filter(({ keys }) => keys.every((key) => seen.has(key)));
+    if (!matches.length) return [];
+    const specificity = Math.max(...matches.map(({ keys }) => keys.length));
+    return matches.filter(({ keys }) => keys.length === specificity).map(({ line }) => line);
+  }
+  function rememberOpeningChoice(context, key) {
+    openingMemory[context] = key;
+    try { localStorage.setItem(BOOK_MEMORY_KEY, JSON.stringify(openingMemory)); } catch {}
   }
   function openingBookMove(color) {
     if ((state.variant || 'standard') !== 'standard') return null;
-    const line = historyBookKey();
-    const entries = OPENING_BOOK[line];
-    if (!entries?.length) return null;
+    const played = historyMoveKeys();
+    const lines = matchedOpeningLines();
+    if (!lines.length) return null;
+    const merged = new Map();
+    for (const line of lines) {
+      for (const entry of OPENING_BOOK[line] || []) {
+        const previous = merged.get(entry.key);
+        merged.set(entry.key, previous ? { ...entry, weight: previous.weight + entry.weight } : { ...entry });
+      }
+    }
     const legalByKey = new Map(globalThis.ChuheAI.legalMoves(state.board, color, 'standard').map((move) => [moveKey(move), move]));
-    const available = entries.filter((entry) => legalByKey.has(entry.key));
+    const available = [...merged.values()].filter((entry) => legalByKey.has(entry.key)).sort((a, b) => b.weight - a.weight);
     if (!available.length) return null;
     const limit = difficulty === 'hard' ? 2 : difficulty === 'normal' ? 3 : available.length;
     const candidates = available.slice(0, limit);
-    const total = candidates.reduce((sum, entry) => sum + entry.weight, 0);
+    const context = `${color}:${lines.map((line) => line || 'start').sort().join('|')}`;
+    const previousKey = openingMemory[context];
+    const repeatFactor = difficulty === 'hard' ? 0.25 : 0;
+    const weighted = candidates.map((entry) => ({
+      ...entry,
+      effectiveWeight: entry.weight * (candidates.length > 1 && entry.key === previousKey ? repeatFactor : 1)
+    }));
+    const total = weighted.reduce((sum, entry) => sum + entry.effectiveWeight, 0);
     let roll = Math.random() * total;
-    let picked = candidates[candidates.length - 1];
-    for (const entry of candidates) {
-      roll -= entry.weight;
+    let picked = weighted[weighted.length - 1];
+    for (const entry of weighted) {
+      roll -= entry.effectiveWeight;
       if (roll <= 0) {
         picked = entry;
         break;
       }
     }
-    lastDecision = { source: 'opening-book', line, move: picked.key, name: picked.name, weight: picked.weight };
+    rememberOpeningChoice(context, picked.key);
+    const exactLine = historyBookKey();
+    const transposed = lines.length > 1 || !lines.includes(exactLine);
+    lastDecision = {
+      source: 'opening-book',
+      line: lines.join('|'),
+      matchedBy: transposed ? 'transposition' : 'sequence',
+      move: picked.key,
+      name: picked.name,
+      weight: picked.weight,
+      repeatAvoided: Boolean(previousKey && previousKey !== picked.key)
+    };
     return legalByKey.get(picked.key);
   }
   function positionSignature(board, turn) {
